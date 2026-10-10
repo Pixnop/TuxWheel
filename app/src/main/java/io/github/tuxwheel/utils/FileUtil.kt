@@ -335,6 +335,12 @@ class FileUtil(val context: Context) {
                     ), Constants.LOG_FOLDER_OLD_NAME
                 )
                 filesArray += dirOld.listFiles() ?: arrayOf<File>()
+                val dirLegacy = File(
+                    Environment.getExternalStoragePublicDirectory(
+                        Environment.DIRECTORY_DOWNLOADS
+                    ), Constants.LEGACY_LOG_FOLDER_NAME
+                )
+                filesArray += dirLegacy.listFiles() ?: arrayOf<File>()
                 if (filesArray.isEmpty()) {
                     return tripModels
                 }

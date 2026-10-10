@@ -23,7 +23,7 @@ Google-recommended alternative) or standardise on Koin?
 
 **Retain Koin 4.x as the sole DI framework.**
 
-All new modules (e.g., `dashboardModule`) are registered as Koin modules in `WheelLog.startKoin {}`.
+All new modules (e.g., `dashboardModule`) are registered as Koin modules in `TuxWheel.startKoin {}`.
 
 ## Rationale
 
@@ -66,4 +66,4 @@ only the BLE session is shared application-wide by this pattern.
 
 - All future ViewModels, repositories, and utilities are provided through Koin modules.
 - Hilt is not added as a dependency.
-- `WheelLog.startKoin {}` is the single place where all modules are registered.
+- `TuxWheel.startKoin {}` is the single place where all modules are registered.

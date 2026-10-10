@@ -17,7 +17,8 @@ object Constants {
     const val INTENT_EXTRA_ALARM_TYPE = "alarm_type"
     const val INTENT_EXTRA_ALARM_VALUE = "alarm_value"
     const val MAIN_NOTIFICATION_ID = 423411
-    const val LOG_FOLDER_NAME = "WheelLog"
+    const val LOG_FOLDER_NAME = "TuxWheel"
+    const val LEGACY_LOG_FOLDER_NAME = "WheelLog"
     const val LOG_FOLDER_OLD_NAME = "WheelLog Logs"
 
     enum class WHEEL_TYPE {

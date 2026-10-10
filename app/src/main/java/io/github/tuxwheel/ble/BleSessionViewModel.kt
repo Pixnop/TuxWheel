@@ -578,8 +578,8 @@ class BleSessionViewModel(application: Application) : AndroidViewModel(applicati
     }
 
     /**
-     * Gotway/Begode's reverse-engineered protocol has two long-standing quirks that legacy
-     * WheelLog corrected on the app side (the wheel itself is never asked to change anything):
+     * Gotway/Begode's reverse-engineered protocol has two long-standing quirks corrected on
+     * the app side (the wheel itself is never asked to change anything):
      *  - Some MCM boards report speed/distance ~12.5% too high, corrected via [AppConfig.gotwayMcm].
      *  - Depending on firmware/mounting, reported speed/phase current/PWM can be negative while
      *    riding forward; [AppConfig.gotwayNegative] lets the user force them positive ("absolute"),
@@ -1008,8 +1008,8 @@ class BleSessionViewModel(application: Application) : AndroidViewModel(applicati
     }
 
     /**
-     * Sends a confirmation beep right after a protocol is selected, mirroring legacy
-     * WheelLog's connect-beep behavior (a Gotway/Begode wheel double-beeps to confirm
+     * Sends a confirmation beep right after a protocol is selected (a Gotway/Begode wheel
+     * double-beeps to confirm
      * it accepted the BLE connection). Only fires when the active protocol supports
      * [CommandType.BEEP] and the user hasn't disabled it via [AppConfig.connectBeep].
      * The BLE connection callback that triggers this only runs once GATT is already

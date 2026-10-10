@@ -188,7 +188,7 @@ private fun pedalsModeSetting(appConfig: AppConfig, viewModel: BleSessionViewMod
 /**
  * Wheel-reported alarm mode (which speed/PWM alarm thresholds are currently disabled on
  * the wheel itself). On Gotway/Begode, [CommandType.SET_ALARM_SPEED] actually implements
- * this same preset (legacy WheelLog.Android's `GotwayAdapter.updateAlarmMode`: "o"/"u"/"i"/"I"
+ * this same preset (`GotwayAdapter.updateAlarmMode`: "o"/"u"/"i"/"I"
  * for on_level_alarm/off_level_1_alarm/off_level_2_alarm/pwm_tiltback_alarm), so it's editable
  * there. Other protocols that support [CommandType.SET_ALARM_SPEED] use it for raw speed
  * threshold(s) instead (see [alarmSpeedSetting]), so this stays read-only for them.

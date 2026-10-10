@@ -3,8 +3,7 @@ package io.github.tuxwheel.ble
 import io.github.tritbool.euc.ble.models.EUCDevice
 
 /**
- * Keeps the discovered-device list in discovery (FIFO) order, the way the legacy WheelLog
- * scan dialog behaved.
+ * Keeps the discovered-device list in discovery (FIFO) order.
  *
  * This is needed because the BLE library stores its scan results in a hash map, so the list
  * handed over by `onScanCompleted` is in arbitrary order; replacing the app-side list with it

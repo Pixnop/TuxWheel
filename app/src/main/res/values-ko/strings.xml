@@ -151,7 +151,7 @@
 
     <!-- Fuzzy -->
     <string name="profile_name_title">"프로필 이름 수정"</string>
-    <string name="about_app_title">"WhellLog 정보"</string>
+    <string name="about_app_title">TuxWheel 정보</string>
     <string name="settings_title">"설정"</string>
     <string name="amp">"A"</string>
 
