@@ -7,7 +7,7 @@
     android:layout_height="match_parent"
     android:id="@+id/main_view"
     android:fitsSystemWindows="true"
-    tools:context="com.cooper.wheellog.MainActivity">
+    tools:context="io.github.tuxwheel.MainActivity">
     <LinearLayout
         android:id="@+id/main_header"
         android:layout_width="match_parent"

@@ -17,7 +17,7 @@ android {
     }
 
     defaultConfig {
-        applicationId "com.cooper.wheellog"
+        applicationId "io.github.tuxwheel"
         minSdk 23
         targetSdk 36
         versionCode 1
@@ -81,7 +81,7 @@ android {
         abortOnError false
         disable 'ComposableNaming'
     }
-    namespace 'com.cooper.wheellog'
+    namespace 'io.github.tuxwheel'
 }
 
 dependencies {

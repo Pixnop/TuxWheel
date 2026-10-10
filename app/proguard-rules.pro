@@ -1,4 +1,4 @@
-#-keep class com.cooper.wheellog.MainActivity
+#-keep class io.github.tuxwheel.MainActivity
 
 
 #-dontwarn org.bouncycastle.jsse.BCSSLParameters

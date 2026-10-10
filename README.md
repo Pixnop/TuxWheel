@@ -5,8 +5,8 @@
 [![Build](https://github.com/Tritbool/TuxWheel/actions/workflows/gradle.yml/badge.svg)](https://github.com/Tritbool/TuxWheel/actions)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](LICENSE)
 
-TuxWheel is an unofficial Android companion for electric unicycles (EUCs),
-based on WheelLog. It connects over Bluetooth Low Energy (BLE) to display
+TuxWheel is an Android companion for electric unicycles (EUCs). It connects
+over Bluetooth Low Energy (BLE) to display
 telemetry, configure supported wheel settings, and record rides.
 
 [Releases](https://github.com/Tritbool/TuxWheel/releases) ·
@@ -70,8 +70,8 @@ Start CSV logging from the app. The foreground service keeps recording while
 the interface is in the background and exposes logging controls in its notification.
 Grant notification permission on Android versions that request it.
 
-Files use the existing **Downloads/WheelLog** location intentionally, retaining
-compatibility with earlier logs and tooling; it is not a stale branding reference.
+New files are saved under **Downloads/TuxWheel**. Existing CSV logs remain
+available to the trips page.
 Storage access follows the Android version's permission and storage rules.
 
 Enable the trips page to inspect recorded ride statistics, share a CSV through
@@ -130,8 +130,8 @@ publish the matching library revision/version locally following the
 [upstream instructions](https://github.com/Tritbool/euc_ble_library).
 Do not downgrade the pinned library or plugins to bypass resolution failures.
 
-The application ID remains `com.cooper.wheellog` (`com.cooper.wheellog.debug`
-for debug builds) intentionally for upgrade/data compatibility.
+The application ID and Android namespace are `io.github.tuxwheel`
+(`io.github.tuxwheel.debug` for debug builds).
 
 ## Screenshots to provide
 

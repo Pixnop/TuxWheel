@@ -51,7 +51,7 @@
         android:xlargeScreens="true" />
 
     <application
-        android:name=".WheelLog"
+        android:name=".TuxWheel"
         android:allowBackup="true"
         android:fullBackupContent="@xml/backup_scheme"
         android:icon="@mipmap/ic_launcher"
