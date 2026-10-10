@@ -130,7 +130,7 @@ publish the matching library revision/version locally following the
 [upstream instructions](https://github.com/Tritbool/euc_ble_library).
 Do not downgrade the pinned library or plugins to bypass resolution failures.
 
-The application ID remains `com.cooper.wheellog` (`com.cooper.wheellog.debug`
+The application ID remains `io.github.tuxwheel` (`io.github.tuxwheel.debug`
 for debug builds) intentionally for upgrade/data compatibility.
 
 ## Screenshots to provide

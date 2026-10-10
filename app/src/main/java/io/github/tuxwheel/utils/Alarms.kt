@@ -1,0 +1,310 @@
+package io.github.tuxwheel.utils
+
+import android.content.Context
+import android.content.Intent
+import android.os.Build
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
+import io.github.tuxwheel.AppConfig
+import io.github.tuxwheel.R
+import io.github.tuxwheel.ble.BleSessionViewModel
+import io.github.tuxwheel.TuxWheel
+import io.github.tuxwheel.utils.AudioUtil.playAlarm
+import io.github.tuxwheel.utils.Constants.ALARM_TYPE
+import io.github.tuxwheel.utils.SomeUtil.playSound
+import kotlinx.coroutines.*
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.get
+import org.koin.core.component.inject
+import timber.log.Timber
+import java.util.Timer
+import java.util.TimerTask
+import kotlin.math.abs
+import kotlin.math.roundToInt
+
+object Alarms: KoinComponent {
+    private val appConfig: AppConfig by inject()
+    private val viewModel: BleSessionViewModel by inject()
+    private val notifications: NotificationUtil by inject()
+
+    private var speedAlarmExecuting = TempBoolean().apply { timeToResetToDefault = 170 }
+    private var currentAlarmExecuting = TempBoolean().apply { timeToResetToDefault = 170 }
+    private var temperatureAlarmExecuting = TempBoolean().apply { timeToResetToDefault = 570 }
+    private var batteryAlarmExecuting = TempBoolean().apply { timeToResetToDefault = 970 }
+    private var wheelAlarmExecuting = TempBoolean().apply { timeToResetToDefault = 170 }
+    private var lastPlayWarningSpeedTime = System.currentTimeMillis()
+    private var alarmTimer: Timer? = null
+    private const val checkPeriod: Long = 200
+    private lateinit var timerTask: TimerTask
+    private var isStarted: Boolean = false
+
+    private fun newTimerTask(): TimerTask {
+        return object : TimerTask() {
+            override fun run() {
+                val mContext: Context = get()
+                if (!reCheckAlarm(viewModel.calculatedPwm / 100, mContext)) {
+                    stop()
+                }
+            }
+        }
+    }
+
+    val alarm: Int
+        get() {
+            var alarm = 0
+            if (speedAlarmExecuting.value) {
+                alarm = alarm or 0x01
+            }
+            if (temperatureAlarmExecuting.value) {
+                alarm = alarm or 0x04
+            }
+            if (currentAlarmExecuting.value) {
+                alarm = alarm or 0x02
+            }
+            if (batteryAlarmExecuting.value) {
+                alarm = alarm or 0x08
+            }
+            if (wheelAlarmExecuting.value) {
+                alarm = alarm or 0x10
+            }
+            return alarm
+        }
+
+    @Synchronized
+    fun start() {
+        stop()
+        isStarted = true
+        timerTask = newTimerTask()
+        alarmTimer = Timer().apply {
+            scheduleAtFixedRate(timerTask, 0, checkPeriod)
+        }
+    }
+
+    @Synchronized
+    fun stop() {
+        if (isStarted) {
+            timerTask.cancel()
+            alarmTimer?.cancel()
+            alarmTimer = null
+            isStarted = false
+        }
+    }
+
+    fun checkAlarm(pwm: Double, mContext: Context): Boolean {
+        if (isStarted) {
+            return true
+        }
+        return reCheckAlarm(pwm, mContext)
+    }
+
+    private fun reCheckAlarm(pwm: Double, mContext: Context): Boolean {
+        val executed = if (appConfig.pwmBasedAlarms) {
+            alertedAlarms(pwm, mContext)
+        } else {
+            oldAlarms(mContext)
+        }
+                || currentAlarms(mContext)
+                || temperatureAlarms(mContext)
+                || batteryAlarms(mContext)
+                || wheelAlarms(mContext)
+        if (executed && !isStarted) {
+            start()
+        }
+        return executed
+    }
+
+    private fun alertedAlarms(pwm: Double, mContext: Context): Boolean {
+        if (pwm > appConfig.alarmFactor1 / 100.0) {
+            AudioUtil.toneDuration =
+                (200 * (pwm - appConfig.alarmFactor1 / 100.0) / (appConfig.alarmFactor2 / 100.0 - appConfig.alarmFactor1 / 100.0)).roundToInt()
+            AudioUtil.toneDuration = MathsUtil.clamp(AudioUtil.toneDuration, 20, 200)
+            raiseAlarm(ALARM_TYPE.PWM, pwm, mContext)
+            return true
+        } else {
+            // check if speed alarm executing and stop it
+            speedAlarmExecuting.value = false
+            // pre alarm
+            val warningPwm = appConfig.warningPwm / 100.0
+            val warningSpeedPeriod = appConfig.warningSpeedPeriod * 1000
+            if (warningPwm != 0.0 && warningSpeedPeriod != 0 && pwm >= warningPwm && System.currentTimeMillis() - lastPlayWarningSpeedTime > warningSpeedPeriod) {
+                lastPlayWarningSpeedTime = System.currentTimeMillis()
+                playSound(mContext, R.raw.warning_pwm)
+            } else {
+                val warningSpeed = appConfig.warningSpeed
+                if (warningSpeed != 0 && warningSpeedPeriod != 0 && viewModel.speedDouble >= warningSpeed && System.currentTimeMillis() - lastPlayWarningSpeedTime > warningSpeedPeriod) {
+                    lastPlayWarningSpeedTime = System.currentTimeMillis()
+                    playSound(mContext, R.raw.sound_warning_speed)
+                }
+            }
+        }
+        return false
+    }
+
+    private fun oldAlarms(mContext: Context): Boolean {
+        if (checkOldAlarmSpeed(appConfig.alarm1Speed, appConfig.alarm1Battery)) {
+            AudioUtil.toneDuration = 50
+            raiseAlarm(ALARM_TYPE.SPEED1, viewModel.speedDouble, mContext)
+            return true
+        } else if (checkOldAlarmSpeed(
+                appConfig.alarm2Speed,
+                appConfig.alarm2Battery
+            )
+        ) {
+            AudioUtil.toneDuration = 100
+            raiseAlarm(ALARM_TYPE.SPEED2, viewModel.speedDouble, mContext)
+            return true
+        } else if (checkOldAlarmSpeed(
+                appConfig.alarm3Speed,
+                appConfig.alarm3Battery
+            )
+        ) {
+            AudioUtil.toneDuration = 180
+            raiseAlarm(ALARM_TYPE.SPEED3, viewModel.speedDouble, mContext)
+            return true
+        } else {
+            // check if speed alarm executing and stop it
+            speedAlarmExecuting.value = false
+        }
+        return false
+    }
+
+    private fun checkOldAlarmSpeed(alarmSpeed: Int, alarmBattery: Int): Boolean {
+        return alarmSpeed > 0
+            && alarmBattery > 0
+            && viewModel.batteryLevel <= alarmBattery
+            && viewModel.speedDouble >= alarmSpeed
+    }
+
+    private fun temperatureAlarms(mContext: Context): Boolean {
+        if (temperatureAlarmExecuting.value) {
+            return true
+        }
+        val alarmTemperature = appConfig.alarmTemperature
+        val alarmMotorTemperature = appConfig.alarmMotorTemperature
+        if (alarmTemperature > 0 && viewModel.temperatureDouble >= alarmTemperature) {
+            raiseAlarm(
+                ALARM_TYPE.TEMPERATURE,
+                viewModel.temperatureDouble,
+                mContext
+            )
+            temperatureAlarmExecuting.value = true
+        } else if (alarmMotorTemperature > 0 && viewModel.motorTemperatureDouble >= alarmMotorTemperature) {
+            raiseAlarm(
+                ALARM_TYPE.TEMPERATURE,
+                viewModel.motorTemperatureDouble,
+                mContext
+            )
+            temperatureAlarmExecuting.value = true
+        }
+        return temperatureAlarmExecuting.value
+    }
+
+    private fun currentAlarms(mContext: Context): Boolean {
+        if (currentAlarmExecuting.value) {
+            return true
+        }
+        val alarmCurrent = appConfig.alarmCurrent * 100
+        val alarmPhaseCurrent = appConfig.alarmPhaseCurrent * 100
+        if (alarmCurrent > 0 && abs(viewModel.currentDouble) >= alarmCurrent) {
+            raiseAlarm(
+                ALARM_TYPE.CURRENT,
+                viewModel.currentDouble,
+                mContext
+            )
+            currentAlarmExecuting.value = true
+        } else if (alarmPhaseCurrent > 0 && abs(viewModel.phaseCurrentDouble) >= alarmPhaseCurrent) {
+            raiseAlarm(
+                ALARM_TYPE.CURRENT,
+                viewModel.phaseCurrentDouble,
+                mContext
+            )
+            currentAlarmExecuting.value = true
+        }
+        return currentAlarmExecuting.value
+    }
+
+    private fun batteryAlarms(mContext: Context): Boolean {
+        if (batteryAlarmExecuting.value) {
+            return true
+        }
+        val alarmBattery = appConfig.alarmBattery
+        if (alarmBattery > 0 && viewModel.batteryLevel <= alarmBattery) {
+            raiseAlarm(
+                    ALARM_TYPE.BATTERY,
+                    viewModel.batteryLevel.toDouble(),
+                    mContext
+            )
+            batteryAlarmExecuting.value = true
+        }
+        return batteryAlarmExecuting.value
+    }
+
+    private fun wheelAlarms(mContext: Context): Boolean {
+        if (wheelAlarmExecuting.value) {
+            return true
+        }
+        val alarmWheel = appConfig.alarmWheel
+        if (alarmWheel && viewModel.wheelAlarmState) {
+            raiseAlarm(
+                    ALARM_TYPE.WHEEL,
+                    viewModel.calculatedPwm,
+                    mContext
+                )
+                wheelAlarmExecuting.value = true
+            }
+        return wheelAlarmExecuting.value
+    }
+
+    private fun raiseAlarm(alarmType: ALARM_TYPE, value: Double, mContext: Context) {
+        val intent = Intent(Constants.ACTION_ALARM_TRIGGERED)
+        intent.putExtra(Constants.INTENT_EXTRA_ALARM_TYPE, alarmType)
+        intent.putExtra(Constants.INTENT_EXTRA_ALARM_VALUE, value)
+        val pattern: LongArray = when (alarmType) {
+            ALARM_TYPE.SPEED1,
+            ALARM_TYPE.SPEED2,
+            ALARM_TYPE.SPEED3,
+            ALARM_TYPE.PWM -> longArrayOf(0, 100, 100)
+            ALARM_TYPE.CURRENT -> longArrayOf(0, 50, 50, 50, 50)
+            ALARM_TYPE.TEMPERATURE -> longArrayOf(0, 500, 500)
+            ALARM_TYPE.BATTERY -> longArrayOf(0, 100, 500)
+            ALARM_TYPE.WHEEL -> longArrayOf(0, 50, 50)
+        }
+        if (!appConfig.disablePhoneVibrate) {
+            vibrate(mContext, pattern)
+        }
+        if (!appConfig.disablePhoneBeep) {
+            CoroutineScope(Job()).launch {
+                Timber.i("Scheduled alarm. $alarmType")
+                if (alarmType == ALARM_TYPE.BATTERY) {
+                    playSound(mContext, R.raw.lowbat)
+                }
+                else playAlarm(alarmType)
+            }
+        }
+        mContext.sendBroadcast(intent)
+        val alarmText = alarmType.toString()
+        notifications.alarmText = alarmText
+        notifications.update()
+    }
+
+    fun vibrate(mContext: Context, pattern: LongArray) {
+        val vib = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val vibratorManager =
+                mContext.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
+            vibratorManager.defaultVibrator
+        } else  {
+            @Suppress("DEPRECATION")
+            mContext.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+        }
+        if (vib.hasVibrator()) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val vibrationEffect = VibrationEffect.createWaveform(pattern, -1)
+                vib.vibrate(vibrationEffect)
+            } else {
+                @Suppress("DEPRECATION")
+                vib.vibrate(pattern, -1)
+            }
+        }
+    }
+}
