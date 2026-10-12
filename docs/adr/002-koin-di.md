@@ -1,5 +1,7 @@
 # ADR 002 – Koin as the Sole Dependency Injection Framework
 
+<img src="../../app/src/main/res/drawable-nodpi/tuxwheel.png" alt="TuxWheel icon" width="32" />
+
 **Date:** 2026-07-17  
 **Status:** Accepted  
 
@@ -21,7 +23,7 @@ Google-recommended alternative) or standardise on Koin?
 
 **Retain Koin 4.x as the sole DI framework.**
 
-All new modules (e.g., `dashboardModule`) are registered as Koin modules in `WheelLog.startKoin {}`.
+All new modules (e.g., `dashboardModule`) are registered as Koin modules in `TuxWheel.startKoin {}`.
 
 ## Rationale
 
@@ -35,24 +37,33 @@ All new modules (e.g., `dashboardModule`) are registered as Koin modules in `Whe
 
 Migrating to Hilt at this stage would be a large, risky refactor with no clear user-visible benefit.
 
-## Cross-ViewModel injection pattern
+## Shared BLE session and dashboard injection
 
-When one ViewModel needs a reference to another ViewModel (e.g., `DashboardViewModel` needs the
-Activity-scoped `BleSessionViewModel`), pass the already-resolved instance as a Koin parameter:
+`BleSessionViewModel` is an app-wide Koin `single`, not an Activity-scoped
+ViewModel definition. Activities, services, and Compose consumers must share the
+same BLE session. Resolve it with `by inject()` outside Compose or `koinInject()`
+inside Compose, then pass it to `DashboardViewModel` as a Koin parameter.
+This matches `BleModule.kt` and `DashboardModule.kt`:
 
 ```kotlin
-// Module
+// BLE module
+single<BleSessionViewModel> { BleSessionViewModel(androidApplication()) }
+
+// Dashboard module
 viewModel { (bleVm: BleSessionViewModel) -> DashboardViewModel(androidApplication(), bleVm, get()) }
 
 // Composable
-val bleVm: BleSessionViewModel = koinViewModel()
+val bleVm: BleSessionViewModel = koinInject()
 val dashVm: DashboardViewModel = koinViewModel { parametersOf(bleVm) }
 ```
 
-This avoids creating orphaned ViewModel instances while keeping Koin's concise DSL.
+Do not resolve `BleSessionViewModel` through `koinViewModel()` or register it with
+`viewModel {}`: ViewModelStore-scoped resolution can create disconnected sessions
+for consumers outside that store. `DashboardViewModel` remains a Koin `viewModel`;
+only the BLE session is shared application-wide by this pattern.
 
 ## Consequences
 
 - All future ViewModels, repositories, and utilities are provided through Koin modules.
 - Hilt is not added as a dependency.
-- `WheelLog.startKoin {}` is the single place where all modules are registered.
+- `TuxWheel.startKoin {}` is the single place where all modules are registered.

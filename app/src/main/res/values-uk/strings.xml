@@ -65,7 +65,7 @@
     <string name="watch_settings_title">Налаштування годинника/браслета</string>
     <string name="wheel_settings_title">Налаштування колеса</string>
     <string name="reset_user_distance_title">Скинути мій пробіг</string>
-    <string name="about_app_title">Про Wheellog</string>
+    <string name="about_app_title">Про TuxWheel</string>
     <string name="settings_title">Налаштування</string>
     <string name="amp">А</string>
     <string name="max_speed_dial_title">Верхня границя зовн. шкали</string>
@@ -257,7 +257,7 @@
     <string name="day_night_theme_day">Світла тема</string>
     <string name="day_night_theme_as_system">Використати налаштування телефона</string>
     <string name="day_night_theme_title">Нічний режим</string>
-    <string name="app_theme_description">Тема Wheellog</string>
+    <string name="app_theme_description">Тема TuxWheel</string>
     <string name="app_theme_title">Тема</string>
     <string name="lock_mode_description">Заблокувати колесо</string>
     <string name="lock_mode_title">Режим блокування</string>

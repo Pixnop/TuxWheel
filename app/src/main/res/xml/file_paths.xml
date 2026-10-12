@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths>
-    <external-path name="logs" path="Download/WheelLog/" />
+    <external-path name="logs" path="Download/TuxWheel/" />
+    <external-path name="legacy_logs" path="Download/WheelLog/" />
     <external-path name="logs_old" path="Download/WheelLog Logs/" />
     <files-path name="files" path="." />
 </paths>

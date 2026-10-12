@@ -1,4 +1,7 @@
 <resources>
+    <string name="trip_delete_failed">Could not delete the trip file.</string>
+    <string name="trip_load_failed">Could not load trips.</string>
+    <string name="trip_share_failed">Could not share the trip file.</string>
     <string name="kmh">km/h</string>
     <string name="mph">mph</string>
     <string name="km">km</string>
@@ -159,7 +162,7 @@
     <string name="reset_lowest_battery_title">Reset battery sag</string>
     <string name="reset_user_distance_title">Reset user distance</string>
     <string name="profile_name_title">Edit profile name</string>
-    <string name="about_app_title">About WheelLog</string>
+    <string name="about_app_title">About TuxWheel</string>
     <string name="settings_title">Settings</string>
     <string name="amp">A</string>
     <string name="newton">N*m</string>
@@ -248,7 +251,7 @@
     <string name="alarm_motor_temperature_description">Motor temperature that triggers the alarm</string>
     <string name="battery_alarm_title">Battery level Alarm</string>
     <string name="alarm_battery_description">Battery level that triggers the alarm</string>
-    <string name="alarm_wheel_title">Wheel Alarm by Wheellog</string>
+    <string name="alarm_wheel_title">Wheel alarm</string>
     <string name="alarm_wheel_description">Alarm that triggers by wheel alarm</string>
     <string name="speed_axis">speed</string>
     <string name="current_axis">current</string>
@@ -272,7 +275,7 @@
     <string name="auto_voltage_title">Auto detect wheel voltage</string>
     <string name="auto_voltage_description">If possible, switch off if voltage is irrelevant</string>
     <string name="ks18l_scaler_title">Wrong 18L distance</string>
-    <string name="ks18l_scaler_description">18L used to show distance incorrectly. WheelLog corrects this number, but if you want to see the wrong raw numbers from the wheel - check this</string>
+    <string name="ks18l_scaler_description">18L used to show distance incorrectly. TuxWheel corrects this number, but if you want to see the wrong raw numbers from the wheel - check this</string>
     <string name="extreme_mode_title">Extreme Mode</string>
     <string name="extreme_mode_description">For stunts only! Not intended for normal riding!</string>
     <string name="trick_title">Trick</string>
@@ -483,7 +486,7 @@
     <string name="github_desc">"Thanks to all contributors."</string>
     <string name="telegram">Telegram</string>
     <string name="FAQ">FAQ</string>
-    <string name="about_app_desc">This app is free and open source. It is developed by volunteers in their free time. If you like this app, you can support the project by donating.</string>
+    <string name="about_app_desc">TuxWheel is a free and open-source companion app for electric unicycles. Bluetooth communication is powered by EUC_BLE_LIBRARY.</string>
     <string name="power_off">Power off</string>
     <string name="reset_trip">Reset trip</string>
     <string name="reset_trip_message">Are you sure you want to reset trip distance on the wheel?</string>
@@ -536,7 +539,7 @@
     <string name="standby_delay_title">Standby</string>
     <string name="standby_delay_description">Standby delay when wheel is inactive</string>
     <string name="app_theme_title">Theme</string>
-    <string name="app_theme_description">UI theme of Wheellog</string>
+    <string name="app_theme_description">UI theme of TuxWheel</string>
     <string name="day_night_theme_title">Dark mode</string>
     <string name="day_night_theme_as_system">Use phone settings</string>
     <string name="day_night_theme_day">Day theme</string>
@@ -559,7 +562,7 @@
     <string name="notification_buttons_description">Buttons in the notification bar</string>
     <string name="use_reconnect_title">Use reconnect</string>
     <string name="use_reconnect_description">Autoreconnect to wheel if data freeze (use only if you have problems)</string>
-    <string name="use_raw_description">When enabled, all raw Bluetooth data packets from the wheel are logged to a separate CSV file. Logging begins when connected and first packet is received. The log file remains open while this setting is enabled, automatically continuing to log data across any disconnections and reconnections. Toggle this setting off to close the current log file. Files are saved to Downloads/WheelLog/[MAC_ADDRESS]/RAW_yyyy_MM_dd_HH_mm_ss.csv</string>
+    <string name="use_raw_description">When enabled, all raw Bluetooth data packets from the wheel are logged to a separate CSV file. Logging begins when connected and first packet is received. The log file remains open while this setting is enabled, automatically continuing to log data across any disconnections and reconnections. Toggle this setting off to close the current log file. Files are saved to Downloads/TuxWheel/[MAC_ADDRESS]/RAW_yyyy_MM_dd_HH_mm_ss.csv</string>
     <string name="private_policy"><![CDATA[Before using the app, you must accept the <a href=\"https://github.com/Wheellog/Wheellog.Android/wiki/Privacy-Policy\">Private policy</a> and <a href=\"https://github.com/Wheellog/Wheellog.Android/wiki/Terms-&-Conditions\">Terms & Conditions</a>]]></string>
     <string name="replace_info_block">Replace \"%s\" to:</string>
     <string name="auto_log_when_moving_description">Start auto logging only when wheel speed more than</string>

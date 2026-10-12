@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="trip_delete_failed">Impossible de supprimer le fichier du trajet.</string>
+    <string name="trip_load_failed">Impossible de charger les trajets.</string>
+    <string name="trip_share_failed">Impossible de partager le fichier du trajet.</string>
     <string name="unknown_device">Equipement inconnu</string>
 	<string name="ble_not_supported">Bluetooth LE non supporté</string>
 	<string name="error_bluetooth_not_supported">Votre equipement ne supporte pas le bluetooth.</string>
@@ -99,7 +102,7 @@
 	<string name="reset_max_values_title">Réinitialisation les valeurs maximales</string>
 	<string name="reset_max_values_description">Réinitialisation les valeurs maximales de vitesse, PWM, courant, puissance</string>
 	<string name="reset_user_distance_title">Réinitialisation distance utilisateur</string>
-    <string name="about_app_title">A propos de WheelLog</string>
+    <string name="about_app_title">A propos de TuxWheel</string>
 	<string name="settings_title">Paramètres</string>
     <string name="amp">A</string>
 	<string name="max_speed_dial_title">Vitesse Max</string>

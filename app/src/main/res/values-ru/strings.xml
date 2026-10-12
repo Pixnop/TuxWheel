@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="trip_delete_failed">Не удалось удалить файл поездки.</string>
+    <string name="trip_load_failed">Не удалось загрузить поездки.</string>
+    <string name="trip_share_failed">Не удалось поделиться файлом поездки.</string>
     <string name="alert1_title">Первое предупреждение</string>
     <string name="alert2_title">Второе предупреждение</string>
     <string name="alert3_title">Третье предупреждение</string>
@@ -74,7 +77,7 @@
     <string name="trip_settings_title">Настройки поездки</string>
     <string name="reset_user_distance_title">Обнулить мой пробег</string>
     <string name="profile_name_title">Изменить имя профиля</string>
-    <string name="about_app_title">О программе Wheellog</string>
+    <string name="about_app_title">О приложении TuxWheel</string>
     <string name="settings_title">Настройки</string>
     <string name="amp">А</string>
     <string name="max_speed_dial_title">Верхняя граница внешней шкалы</string>
@@ -109,7 +112,7 @@
     <string name="auto_log_title">Автоматическое логирование</string>
     <string name="auto_log_description">Автоматически начать запись логов при подключении колеса.</string>
     <string name="use_raw_title">Запись Raw данных</string>
-    <string name="use_raw_description">Когда включено, все пакеты Bluetooth от колеса будут записаны в отдельный CSV файл. Запись начинается когда первый пакет будет получен. Лог файл остается открыт пока эта опция включена, и автоматически будет продолжено после подключения и отключения колеса. Отключите эту настройку, чтобы закончить запись лога. Файлы сохраняются в Download/Wheellog/[MAC_ADDRESS]/RAW_yyyy_MM_dd_HH_mm_ss.csv</string>
+    <string name="use_raw_description">Когда включено, все пакеты Bluetooth от колеса будут записаны в отдельный CSV файл. Запись начинается когда первый пакет будет получен. Лог файл остается открыт пока эта опция включена, и автоматически будет продолжено после подключения и отключения колеса. Отключите эту настройку, чтобы закончить запись лога. Файлы сохраняются в Download/TuxWheel/[MAC_ADDRESS]/RAW_yyyy_MM_dd_HH_mm_ss.csv</string>
     <string name="on_off_strobe">Выкл./Вкл./Строб</string>
     <string name="soft_medium_hard">Мягкие/Средние/Жесткие</string>
     <string name="mode1_2_3_4">Режим1/Режим2/Режим3/Режим4</string>
@@ -272,7 +275,7 @@
     <string name="beep_on_volume_up_description">Кнопки громкости будут проигрывать гудок. С включенной опцией нельзя будет изменить громкость в телефоне.</string>
     <string name="custom_beep_title">Выбрать файл гудка</string>
     <string name="bug_report">Отчет об ошибке</string>
-    <string name="about_app_desc">Это приложение полностью бесплатно с открытым исходным кодом. Он разрабатывается волонтерами в свободное время. Если вам нравится это приложение, вы можете поддержать проект, сделав пожертвование.</string>
+    <string name="about_app_desc">TuxWheel — бесплатное приложение с открытым исходным кодом для электрических моноколёс. Для связи по Bluetooth используется EUC_BLE_LIBRARY.</string>
     <string name="power_off">Выключить колесо</string>
     <string name="power_off_message">Колесо будет выключено. Вы уверены?</string>
     <string name="private_policy_title">Политика конфиденциальности</string>
@@ -346,7 +349,7 @@
     <string name="charging">Заряжается</string>
     <string name="discharging">Разряжается</string>
     <string name="ks18l_scaler_title">Исправление одометра 18L</string>
-    <string name="ks18l_scaler_description">18L показывает неправильную дистанцию и Wheellog может ее скорректировать</string>
+    <string name="ks18l_scaler_description">18L показывает неправильную дистанцию, которую приложение может скорректировать</string>
     <string name="bmsBattery1Title">Батарея 1</string>
     <string name="bmsBattery2Title">Батарея 2</string>
     <string name="bmsFactoryCap">Начальная емкость</string>
