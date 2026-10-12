@@ -13,6 +13,14 @@ telemetry, configure supported wheel settings, and record rides.
 [Builds](https://github.com/Tritbool/TuxWheel/actions) ·
 [Issues](https://github.com/Tritbool/TuxWheel/issues)
 
+## PRIVACY
+**This application runs fully online. It is thought for DeGoogled Android devices and focuses on providing a dashboard for EUCs without bloatware features, focusing on privacy and effectiveness.**
+
+- NO GPS data
+- NO Trackers
+- NO ads
+- NO data collection
+
 ## Requirements and wheel support
 
 - Android 6.0 or newer (API 23), with BLE hardware and Bluetooth enabled.
@@ -65,6 +73,11 @@ Wheel settings and actions are capability-dependent. Verify changes while
 stationary; app alarms do not replace the wheel's own safety protections.
 
 ## Logging, trips, and diagnostics
+
+The app allows the logging of:
+1. Standard data log (similar to WheelLog)
+2. SMART BMS Data at detailed level (for battery analysis, later added into euc soh analyzer APP)
+3. RAW BLE Frames (similar to WheelLog)
 
 Start CSV logging from the app. The foreground service keeps recording while
 the interface is in the background and exposes logging controls in its notification.
