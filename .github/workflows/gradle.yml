@@ -1,70 +1,100 @@
-# This workflow will build a Java project with Gradle
-# For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-gradle
-
-name: Gradle CI
+name: Android Release
 
 on:
   push:
-    branches:
-      - master
-  pull_request:
-    types: [opened, reopened, synchronize]
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
 
 jobs:
-  gradle-build:
+  release:
     runs-on: ubuntu-latest
+
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
-    - name: Set up JAVA
-      uses: actions/setup-java@v3.6.0
-      with:
-        distribution: 'temurin' # See 'Supported distributions' for available options
-        java-version: '17'
-        cache: 'gradle'
-        check-latest: true
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
 
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
-      
-    - name: Cache Gradle packages
-      uses: actions/cache@v4
-      with:
-        path: |
-          ~/.gradle/caches
-          ~/.gradle/wrapper
-        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-        restore-keys: |
-          ${{ runner.os }}-gradle-
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
 
-    - name: Test
-      run: ./gradlew test
-    - name: Assemble
-      run: ./gradlew assembleDebug
-      
-    - name: Cleanup Gradle Cache
-      run: |
-        rm -f ~/.gradle/caches/modules-2/modules-2.lock
-        rm -f ~/.gradle/caches/modules-2/gc.properties
+      - name: Assemble release APK
+        run: ./gradlew :app:assembleRelease --no-daemon
 
-    - name: Get APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: app-debug
-        path: app/build/outputs/apk/debug/app-debug.apk
+      - name: Sign and verify APK
+        shell: bash
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          umask 077
 
+          : "${KEYSTORE_BASE64:?Secret KEYSTORE_BASE64 absent}"
+          : "${KEY_ALIAS:?Secret KEY_ALIAS absent}"
+          : "${KEYSTORE_PASSWORD:?Secret KEYSTORE_PASSWORD absent}"
+          : "${KEY_PASSWORD:?Secret KEY_PASSWORD absent}"
+          : "${ANDROID_HOME:?Variable ANDROID_HOME absente}"
 
-    - name: Send apk to telegram
-      env: 
-        TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
-      if: github.event_name == 'pull_request' && env.TELEGRAM_TOKEN != ''
-      uses: appleboy/telegram-action@master
-      with:
-        to: ${{ secrets.TELEGRAM_TO }}
-        token: env.TELEGRAM_TOKEN
-        message: |
-          ${{ github.event.pull_request.title }}
-          ${{ github.base_ref }} <= ${{ github.head_ref }}
-          PR: https://github.com/${{ github.repository }}/pull/${{github.event.number}}
-        document: app/build/outputs/apk/debug/app-debug.apk
+          KEYSTORE="$RUNNER_TEMP/release.keystore"
+          ALIGNED="$RUNNER_TEMP/release-aligned.apk"
+          trap 'rm -f "$KEYSTORE" "$ALIGNED"' EXIT
+
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$KEYSTORE"
+
+          BUILD_TOOLS="$(
+            find "$ANDROID_HOME/build-tools" \
+              -mindepth 1 -maxdepth 1 -type d |
+              sort -V |
+              tail -n 1
+          )"
+
+          if [[ ! -x "$BUILD_TOOLS/zipalign" || ! -x "$BUILD_TOOLS/apksigner" ]]; then
+            echo "Erreur : zipalign ou apksigner absent des Android Build Tools."
+            exit 1
+          fi
+
+          shopt -s nullglob
+          APKS=(app/build/outputs/apk/release/*-unsigned.apk)
+
+          if (( ${#APKS[@]} != 1 )); then
+            echo "Erreur : attendu exactement un APK non signé, trouvé ${#APKS[@]}."
+            exit 1
+          fi
+
+          mkdir -p dist
+          OUTPUT="dist/TuxWheel.apk"
+
+          "$BUILD_TOOLS/zipalign" -f -v 4 "${APKS[0]}" "$ALIGNED"
+
+          "$BUILD_TOOLS/apksigner" sign \
+            --ks "$KEYSTORE" \
+            --ks-key-alias "$KEY_ALIAS" \
+            --ks-pass env:KEYSTORE_PASSWORD \
+            --key-pass env:KEY_PASSWORD \
+            --v4-signing-enabled false \
+            --out "$OUTPUT" \
+            "$ALIGNED"
+
+          "$BUILD_TOOLS/apksigner" verify --verbose "$OUTPUT"
+
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: TuxWheel ${{ github.ref_name }}
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+          files: dist/TuxWheel.apk
