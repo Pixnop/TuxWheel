@@ -1,9 +1,8 @@
 name: Android Release
 
 on:
-  push:
-    tags:
-      - 'v*'
+  release:
+    types: [published]
 
 permissions:
   contents: write
@@ -90,11 +89,9 @@ jobs:
 
           "$BUILD_TOOLS/apksigner" verify --verbose "$OUTPUT"
 
-      - name: Publish GitHub release
+      - name: Upload APK to GitHub release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name }}
-          name: TuxWheel ${{ github.ref_name }}
-          generate_release_notes: true
+          tag_name: ${{ github.event.release.tag_name }}
           fail_on_unmatched_files: true
           files: dist/TuxWheel.apk
