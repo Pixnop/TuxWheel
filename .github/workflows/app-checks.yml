@@ -40,7 +40,7 @@ jobs:
 
       - name: Publish BLE library to Maven Local
         working-directory: .ci/euc-ble-library
-        run: ./gradlew :euc-ble-core:publishToMavenLocal --no-daemon
+        run: bash ./gradlew :euc-ble-core:publishToMavenLocal --no-daemon
 
       - name: Run unit tests and lint
         run: ./gradlew :app:lintDebug --no-daemon
