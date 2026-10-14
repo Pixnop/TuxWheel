@@ -40,7 +40,6 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import io.github.tuxwheel.ble.BleSessionState
 import io.github.tuxwheel.ble.BleSessionViewModel
-import io.github.tuxwheel.DialogHelper.checkAndShowPrivatePolicyDialog
 import io.github.tuxwheel.DialogHelper.checkBatteryOptimizationsAndShowAlert
 import io.github.tuxwheel.databinding.ActivityMainBinding
 import io.github.tuxwheel.settings.mainScreen
@@ -485,7 +484,6 @@ class MainActivity : AppCompatActivity() {
         val toolbar = binding.toolbar
         setSupportActionBar(toolbar)
         audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
-        checkAndShowPrivatePolicyDialog(this)
         if (!packageManager.hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
             Toast.makeText(this, R.string.ble_not_supported, Toast.LENGTH_SHORT).show()
         }

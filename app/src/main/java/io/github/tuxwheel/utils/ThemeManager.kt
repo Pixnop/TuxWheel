@@ -90,11 +90,8 @@ object ThemeManager: KoinComponent {
         ajdm[ThemeIconEnum.SettingsTrips] = R.drawable.ajdm_trip
         // trip page
         original[ThemeIconEnum.TripsPopupButton] = R.drawable.ic_baseline_settings_24
-        original[ThemeIconEnum.TripsUpload] = R.drawable.ic_baseline_cloud_upload_24
         original[ThemeIconEnum.TripsShare] = R.drawable.ic_baseline_share_24
         original[ThemeIconEnum.TripsDelete] = R.drawable.ic_baseline_delete_24
-        original[ThemeIconEnum.TripsOpenEc] = R.drawable.ic_baseline_open_in_new_24
-        ajdm[ThemeIconEnum.TripsUpload] = R.drawable.ajdm_cloud
         ajdm[ThemeIconEnum.TripsShare] = R.drawable.ajdm_share
     }
 

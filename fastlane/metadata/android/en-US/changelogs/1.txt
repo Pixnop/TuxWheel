@@ -1,0 +1,5 @@
+Initial TuxWheel release.
+- Bluetooth Low Energy wheel connection and live telemetry.
+- Customizable dashboard, supported wheel settings and alarms.
+- Smart BMS details on supported wheels.
+- CSV ride logging, trips and optional raw BLE diagnostics.

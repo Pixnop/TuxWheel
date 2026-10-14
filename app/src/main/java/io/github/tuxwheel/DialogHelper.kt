@@ -10,14 +10,11 @@ import android.net.Uri
 import android.os.Build
 import android.os.PowerManager
 import android.provider.Settings
-import android.text.Html
-import android.text.method.LinkMovementMethod
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.core.widget.doAfterTextChanged
-import io.github.tuxwheel.databinding.PrivacyPolicyBinding
 import io.github.tuxwheel.databinding.UpdatePwmSettingsBinding
 import io.github.tuxwheel.utils.Constants
 import org.koin.core.component.KoinComponent
@@ -227,48 +224,6 @@ object DialogHelper : KoinComponent {
             }
             .setNegativeButton(android.R.string.cancel) { _: DialogInterface?, _: Int -> }
             .show()
-    }
-
-    fun checkAndShowPrivatePolicyDialog(mainActivity: MainActivity) {
-        if (appConfig.privatePolicyAccepted) {
-            return
-        }
-
-        val inflater: LayoutInflater = LayoutInflater.from(mainActivity)
-        val binding = PrivacyPolicyBinding.inflate(inflater, null, false)
-        val agree = binding.agreeWithPolicy
-        val policyText = binding.policyLinks
-        policyText.movementMethod = LinkMovementMethod.getInstance()
-        policyText.text = if (Build.VERSION.SDK_INT > Build.VERSION_CODES.M) {
-            Html.fromHtml(mainActivity.resources.getString(R.string.private_policy), Html.FROM_HTML_MODE_LEGACY)
-        } else {
-            Html.fromHtml(mainActivity.resources.getString(R.string.private_policy))
-        }
-        val dialog = AlertDialog.Builder(mainActivity)
-            .setView(binding.root)
-            .setCancelable(false)
-            .show()
-
-        agree.setOnCheckedChangeListener { _: CompoundButton, checked: Boolean ->
-            if (checked) {
-                binding.okButton.visibility = View.VISIBLE
-                binding.btnCancel.visibility = View.GONE
-            } else {
-                binding.okButton.visibility = View.GONE
-                binding.btnCancel.visibility = View.VISIBLE
-            }
-        }
-        binding.okButton.setOnClickListener {
-            appConfig.privatePolicyAccepted = true
-//                mainActivity.applicationContext,
-//                binding.agreeWithMetrica.isChecked
-//            )
-            dialog.dismiss()
-        }
-        binding.btnCancel.setOnClickListener {
-            dialog.dismiss()
-            mainActivity.finish()
-        }
     }
 
     fun AlertDialog.setBlackIcon(): AlertDialog {

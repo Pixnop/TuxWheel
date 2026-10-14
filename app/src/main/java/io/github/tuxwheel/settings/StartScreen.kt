@@ -95,8 +95,7 @@ fun startScreen(
                 text = {
                     Column {
                         Text(
-                            text = "Version ${BuildConfig.VERSION_NAME}\n" +
-                                    "Build at ${BuildConfig.BUILD_TIME}",
+                            text = "Version ${BuildConfig.VERSION_NAME}",
                             style = MaterialTheme.typography.bodyMedium,
                         )
                         clickablePref(

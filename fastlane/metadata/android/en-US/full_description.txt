@@ -1,0 +1,21 @@
+<p>TuxWheel is a free and open-source Android companion for electric unicycles (EUCs). Connect to your wheel over Bluetooth Low Energy to view live telemetry, adjust supported settings and record rides.</p>
+
+<p><b>Features</b></p>
+<ul>
+<li>Customizable dashboard blocks and gauges, with Original and AJDM themes.</li>
+<li>Speed, battery, temperature, current, PWM and other available telemetry.</li>
+<li>Wheel settings and commands, depending on the connected model and firmware.</li>
+<li>Configurable alarms and charts, plus optional trips and events pages.</li>
+<li>Smart BMS details with per-pack measurements and cell voltages on supported wheels.</li>
+<li>CSV ride logging through a foreground service, with files saved in Downloads/TuxWheel.</li>
+<li>Optional raw Bluetooth diagnostic logs, CSV sharing and picture-in-picture mode.</li>
+<li>Configurable speed, distance and temperature units.</li>
+</ul>
+
+<p>Wheel-family support is provided by EUC_BLE_LIBRARY and includes KingSong, Gotway/Begode, Veteran, InMotion and Ninebot. Connectivity and features depend on the wheel model, firmware and library support; not every feature is available on every wheel.</p>
+
+<p><b>Privacy and permissions</b></p>
+<p>No account, ads, trackers or automatic data uploads. Telemetry and logs are processed locally; an Internet connection is not required to use the dashboard or record rides. Sharing a log uses Android's share chooser and an app you select. Inspect logs for device names, Bluetooth addresses and other identifiers before sharing them.</p>
+<p>Bluetooth permissions are needed to connect to a wheel. On older Android versions, BLE scanning also requires location permission and may require system location to be enabled; TuxWheel does not record GPS tracks. Notification and storage permissions are used where required for logging.</p>
+
+<p>Requires Android 6.0 or newer and Bluetooth Low Energy hardware. Verify wheel settings while stationary. App alarms do not replace the wheel's own safety protections.</p>

@@ -16,12 +16,26 @@ telemetry, configure supported wheel settings, and record rides.
 [Issues](https://github.com/Tritbool/TuxWheel/issues)
 
 ## PRIVACY
-**This application runs fully online. It is thought for DeGoogled Android devices and focuses on providing a dashboard for EUCs without bloatware features, focusing on privacy and effectiveness.**
+**This application works offline. It is designed for DeGoogled Android devices and focuses on providing a dashboard for EUCs without bloatware features, focusing on privacy and effectiveness.**
 
 - NO GPS data
 - NO Trackers
 - NO ads
 - NO data collection
+
+The merged app manifest removes Internet permission, including declarations
+from libraries. Source/help links open in your chosen browser; sharing opens
+your chosen app, neither of which needs network access inside TuxWheel.
+Automatic Android cloud backup and device-transfer extraction of app data are
+disabled. This does not delete existing backups or protect public Downloads
+files from other apps, device-owner tools, or a user's own backup software.
+Export any data you need before uninstalling: settings will not restore
+automatically.
+
+Debug builds log to logcat, not automatically to public HTML files. Ride CSV
+logging and optional raw BLE diagnostics remain explicit app features; they can
+contain identifying data and should be disabled when not needed. Existing files
+are not deleted by this cleanup.
 
 ## Requirements and wheel support
 
@@ -101,7 +115,7 @@ Attach only the relevant, sanitized excerpt to a bug report.
 
 BLE is provided by [EUC_BLE_LIBRARY](https://github.com/Tritbool/euc_ble_library),
 not by wheel protocol decoders embedded in this app.
-The dependency is `io.github.tritbool:euc-ble-library:0.0.8`;
+The dependency is `io.github.tritbool:euc-ble-library:0.1.0`;
 its version is pinned in `gradle/libs.versions.toml`.
 
 The library owns discovery/scanning, connections, protocol detection/decoding,
@@ -127,30 +141,168 @@ Architecture decisions:
 
 ## Development
 
-Use **JDK 17**, Android Studio/SDK tooling, and the checked-in Gradle wrapper.
-The app currently uses **compileSdk 37**.
+Use Android Studio/SDK tooling and the checked-in Gradle wrapper.
+Java/Kotlin compilation targets **JDK 17**; the checked-in
+`gradle/gradle-daemon-jvm.properties` selects **JDK 25** for the Gradle daemon
+and may download it if it is not installed.
+The app currently uses **compileSdk 37** and **targetSdk 36**.
 
 ```sh
 git clone https://github.com/Tritbool/TuxWheel.git
 cd TuxWheel
-./gradlew :app:assembleDebug :app:testDebugUnitTest :app:lintDebug
+./gradlew :app:assembleDebug :app:assembleRelease :app:testDebugUnitTest :app:lintDebug
 ```
 
 These tasks require working resolution of the configured Gradle plugins and
-dependencies. The current local environment could not resolve **AGP 9.2.1**
-before compilation; this is not a successful build or test result.
-
-`mavenLocal()` is configured. If the pinned BLE artifact is unavailable remotely,
-publish the matching library revision/version locally following the
-[upstream instructions](https://github.com/Tritbool/euc_ble_library).
+dependencies from Google Maven, Maven Central, the Gradle Plugin Portal and
+JitPack (MPAndroidChart). Local Maven artifacts are intentionally not used:
+a clean checkout must resolve the published BLE dependency remotely.
 Do not downgrade the pinned library or plugins to bypass resolution failures.
+
+During F-Droid preparation, the local build stopped before compilation because
+**AGP 9.2.1** could not be resolved. Build, unit-test and lint results for these
+changes therefore remain unverified; the existing `0.0.1` GitHub release build
+succeeded, but does not validate these changes.
 
 The application ID and Android namespace are `io.github.tuxwheel`
 (`io.github.tuxwheel.debug` for debug builds).
 
-## Screenshots to provide
+## F-Droid preparation and submission
 
-Replace these tokens with fresh TuxWheel captures, using sanitized/demo data:
+TuxWheel is being prepared for F-Droid; it is **not yet listed**.
+This follows the English/French Fastlane layout used in
+[EUC SoH](https://github.com/Tritbool/euc_soh_kotlin).
+See the [submission guide](https://f-droid.org/fr/docs/Submitting_to_F-Droid_Quick_Start_Guide/)
+and [metadata reference](https://f-droid.org/docs/Build_Metadata_Reference/).
+
+### Store listing
+
+`fastlane/metadata/android/en-US/` is the fallback listing; `fr-FR/` contains
+the French translation. Each has a title, short description, HTML full
+description and `changelogs/1.txt`, matching the current `versionCode 1`.
+The English listing reuses the existing app icon at `images/icon.png`;
+other locales can fall back to it. Fastlane itself is not needed.
+
+Keep titles within 50 characters, summaries within 80, full descriptions
+within 4,000, and release notes within 500. Add
+`changelogs/<versionCode>.txt` in each locale for every release.
+
+### Build and licensing checks before submission
+
+- Run the development tasks above from a clean checkout with no local Maven
+  artifacts, then test BLE connection and foreground logging on a real device.
+- `:app:assembleRelease` produces
+  `app/build/outputs/apk/release/app-release-unsigned.apk` without signing
+  credentials. F-Droid can build and sign it independently; the GitHub release
+  workflow's signing secrets and the shared debug keystore are not required.
+- Build timestamps have been removed from generated code and version labels.
+  This removes one source of nondeterminism, but does **not** establish
+  byte-for-byte reproducibility. Do not configure upstream binary verification
+  until it has been tested with the same toolchain and build inputs.
+- The unused Samsung Accessory SDK JARs have been removed. Do not reintroduce
+  proprietary SDKs or prebuilt libraries without corresponding freely licensed
+  source. The Gradle wrapper JAR is build tooling, not an app dependency.
+- Review the complete release dependency graph and retain required license
+  notices. The GPL-3.0 project license does not replace third-party licenses.
+  Packaging now merges bundled `META-INF/LICENSE*`, `META-INF/NOTICE*` and
+  `META-INF/ASL2.0` resources instead of discarding them; inspect the release APK
+  and complete the dependency inventory as part of the license review.
+  The verified licenses and asset sources are listed below.
+
+### Verified licenses and F-Droid policy
+
+The [F-Droid inclusion policy](https://f-droid.org/docs/Inclusion_Policy/)
+requires freely licensed source and dependencies, a free build toolchain and
+a working build. It does **not** require removing functional FOSS libraries,
+BLE permissions, storage access or foreground services. It explicitly permits
+freely licensed binaries from trusted repositories including JitPack.
+
+- **Inherited WheelLog assets:** the maintainer confirms that the inherited
+  fonts/theme artwork come from GPL-3.0 WheelLog Android. Its
+  [GPL license](https://github.com/Wheellog/Wheellog.Android/blob/f44e39e5388e500a5d2f315d1dcf32f167607bf8/LICENSE)
+  covers the project except components with their own license.
+  Both bundled fonts match
+  [WheelLog's font files](https://github.com/Wheellog/Wheellog.Android/tree/f44e39e5388e500a5d2f315d1dcf32f167607bf8/app/src/main/res/font)
+  byte-for-byte (Git blob IDs are recorded in the packaged notice).
+  `prime_regular.otf` is the inherited Wheellog font, not an identified
+  proprietary dependency.
+- **Source Sans Pro:** `ajdm.otf` also matches Adobe's
+  [Source Sans Pro Regular 2.020](https://github.com/adobe-fonts/source-sans/blob/2.020R-ro/1.075R-it/OTF/SourceSansPro-Regular.otf)
+  byte-for-byte. It remains under **SIL OFL 1.1**, not GPL.
+  The original copyright notice and full OFL text are bundled at
+  `app/src/main/assets/licenses/SourceSansPro-OFL.txt`.
+- **EUC_BLE_LIBRARY 0.1.0:** the maintainer's own open-source library, with a
+  [GPL-3.0 license at the pinned tag](https://github.com/Tritbool/euc_ble_library/blob/0.1.0/LICENSE).
+  Its [publication configuration](https://github.com/Tritbool/euc_ble_library/blob/0.1.0/euc-ble-core/build.gradle.kts)
+  still labels the POM license as MIT. Both licenses are FOSS, but that upstream
+  metadata should be aligned with the intended license; this app retains the
+  tagged GPL notice rather than assuming that the POM relicenses the source.
+- **MPAndroidChart v3.1.0:** the
+  [tagged Apache-2.0 license](https://github.com/PhilJay/MPAndroidChart/blob/v3.1.0/LICENSE)
+  permits its use here. Obtaining it from JitPack is not by itself an
+  F-Droid incompatibility.
+- **AndroidX legacy-support/Media:** FOSS dependencies, not prohibited SDKs.
+  The umbrella dependency currently supplies the Media classes used by
+  hardware-volume-key controls. Keeping it is compliant; replacing it with a
+  direct Media dependency is optional dependency cleanup, not submission work.
+
+Attribution and source references are bundled in
+`app/src/main/assets/licenses/NOTICE.txt`. GPL text is in the repository's
+`LICENSE` and bundled as `app/src/main/assets/licenses/GPL-3.0.txt`.
+No font, chart or BLE replacement is needed on the basis of these licenses.
+
+The location permission is limited to Android 6–11 for BLE discovery, not GPS
+recording. Storage permissions support CSV logging on older Android, and the
+foreground service/notification and battery-optimization option support
+background logging. None is an F-Droid incompatibility; they remain in place.
+
+The earlier cleanup removed unused proprietary Samsung SDK binaries, unrelated
+WheelLog consent, unsolicited debug HTML files and dead feature remnants.
+No runtime analytics SDK, account service or automatic uploader was found.
+Internet access and automatic app backup are disabled.
+
+The remaining verification is operational: a clean release build and F-Droid's
+dependency/scanner checks on the tagged source. The local AGP resolution failure
+prevents checking the resolved transitive graph and final APK here; it is not
+evidence that the libraries or permissions above are non-free.
+Byte-for-byte matching to an upstream APK is needed if opting into upstream
+binary verification, not a prerequisite for ordinary F-Droid-built/signed APKs.
+
+### Release and external submission
+
+1. Verify the release build and F-Droid scanner checks, and add real screenshots
+   below for the listing. Metadata alone is not F-Droid approval.
+2. Publish a **new** release after these changes are merged. The existing
+   `0.0.1` tag predates this preparation and will not expose this metadata.
+   Increment `versionCode` and `versionName` together, add the matching
+   localized changelogs, and tag that exact commit. Do not move an existing tag.
+3. In a separate fork of [fdroiddata](https://gitlab.com/fdroid/fdroiddata),
+   prepare `metadata/io.github.tuxwheel.yml`: use this repository as `Repo`,
+   `RepoType: git`, the confirmed GPL-3.0 license identifier, `subdir: app`,
+   `gradle: [yes]`, and the new release tag as the build `commit`. Match the
+   release's version name/code and select a build environment supporting the
+   checked-in Gradle/JDK/Android SDK requirements. Configure tag-based update
+   checks to match the project's release-tag convention.
+4. In that fdroiddata checkout, run `fdroid readmeta`, `fdroid rewritemeta
+   io.github.tuxwheel`, `fdroid lint io.github.tuxwheel`, and
+   `fdroid build --verbose io.github.tuxwheel`. Resolve scanner/build findings
+   before opening the metadata merge request. Include the source, issue tracker
+   and changelog links, and explicitly state that you are the upstream author.
+5. Submit the merge request to fdroiddata, or open a
+   [Request for Packaging](https://gitlab.com/fdroid/rfp/-/issues) with the
+   source/release links if you need help with packaging.
+
+F-Droid-signed and upstream-signed APKs are not normally interchangeable
+updates. Users may need to uninstall one before installing the other;
+export any logs/settings they need first.
+
+### Screenshots to provide
+
+Add fresh TuxWheel captures using sanitized/demo data under
+`fastlane/metadata/android/en-US/images/phoneScreenshots/1.png`, `2.png`, etc.
+Use the equivalent `fr-FR/images/phoneScreenshots/` directory for French captures.
+No screenshots have been fabricated or copied from EUC SoH.
+Suggested captures:
 
 - `DASHBOARD`: customized blocks and gauge; capture Original and AJDM themes.
 - `SCAN`: discovery dialog showing devices and manual MAC entry.

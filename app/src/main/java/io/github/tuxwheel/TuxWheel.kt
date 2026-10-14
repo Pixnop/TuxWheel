@@ -15,9 +15,8 @@ class TuxWheel : Application() {
             modules(listOf(settingModule, notificationsModule, volumeKeyModule, dbModule, bleModule, dashboardModule))
         }
         if (BuildConfig.DEBUG) {
-            Timber.plant(Timber.DebugTree(), FileLoggingTree(applicationContext))
+            Timber.plant(Timber.DebugTree())
         }
-        // WheelData.initiate() - REMOVED: Migration to BleSessionViewModel
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
