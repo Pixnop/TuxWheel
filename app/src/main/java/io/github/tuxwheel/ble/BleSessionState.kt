@@ -53,7 +53,9 @@ data class BleSessionState(
     val protocolCandidates: List<EUCProtocol> = emptyList(),
     val passwordPromptRequired: Boolean = false,
     val passwordPromptError: Boolean = false,
-    val wheelLockState: WheelLockState = WheelLockState.UNKNOWN
+    val wheelLockState: WheelLockState = WheelLockState.UNKNOWN,
+    /** Includes repeated reports so a rejected command can correct an optimistic toggle. */
+    val wheelLockStateRevision: Long = 0,
 ) {
     // Helper properties for UI binding
     val isConnected: Boolean

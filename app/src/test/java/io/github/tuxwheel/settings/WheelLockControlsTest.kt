@@ -3,10 +3,12 @@ package io.github.tuxwheel.settings
 import android.app.Application
 import androidx.lifecycle.viewModelScope
 import androidx.test.core.app.ApplicationProvider
+import com.google.common.truth.Truth.assertThat
 import io.github.tritbool.euc.ble.EucBleClient
 import io.github.tritbool.euc.ble.core.BLEConstants
 import io.github.tritbool.euc.ble.models.EUCData
 import io.github.tritbool.euc.ble.models.WheelLockState
+import io.github.tritbool.euc.ble.models.WheelSecurityEvent
 import io.github.tritbool.euc.ble.protocols.CommandSupport
 import io.github.tritbool.euc.ble.protocols.CommandType
 import io.github.tuxwheel.ble.BleSessionState
@@ -75,6 +77,17 @@ class WheelLockControlsTest {
         }
         verify(exactly = states.size) { client.sendCommand(CommandType.LOCK, Unit) }
         verify(exactly = states.size) { client.sendCommand(CommandType.UNLOCK, Unit) }
+    }
+
+    @Test fun `repeated wheel reports can correct an optimistic toggle without suppressing commands`() {
+        model.handleWheelSecurityEvent(WheelSecurityEvent.LockStatus(WheelLockState.UNLOCKED))
+        val revision = model.sessionState.value.wheelLockStateRevision
+        model.setWheelLocked(true)
+        model.handleWheelSecurityEvent(WheelSecurityEvent.LockStatus(WheelLockState.UNLOCKED))
+        assertThat(model.sessionState.value.wheelLockState).isEqualTo(WheelLockState.UNLOCKED)
+        assertThat(model.sessionState.value.wheelLockStateRevision).isEqualTo(revision + 1)
+        model.setWheelLocked(true)
+        verify(exactly = 2) { client.sendCommand(CommandType.LOCK, Unit) }
     }
 
     private fun data(speed: Double) = EUCData(

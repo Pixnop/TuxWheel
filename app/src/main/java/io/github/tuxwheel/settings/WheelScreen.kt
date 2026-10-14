@@ -165,7 +165,11 @@ private fun lockSetting(appConfig: AppConfig, viewModel: BleSessionViewModel) {
     ) {
         viewModel.requestWheelLockState()
     }
-    androidx.compose.runtime.LaunchedEffect(state.selectedDevice?.address, state.wheelLockState) {
+    androidx.compose.runtime.LaunchedEffect(
+        state.selectedDevice?.address,
+        state.wheelLockState,
+        state.wheelLockStateRevision,
+    ) {
         when (state.wheelLockState) {
             WheelLockState.LOCKED -> {
                 checkedState.value = true
