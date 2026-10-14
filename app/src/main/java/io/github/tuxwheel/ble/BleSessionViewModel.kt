@@ -233,6 +233,14 @@ class BleSessionViewModel(application: Application) : AndroidViewModel(applicati
     }
 
     internal fun handleWheelSecurityEvent(event: WheelSecurityEvent) {
+        if (event is WheelSecurityEvent.LockStatus) {
+            _sessionState.update {
+                it.copy(
+                    wheelLockState = event.state,
+                    wheelLockStateRevision = it.wheelLockStateRevision + 1,
+                )
+            }
+        }
         if (event is WheelSecurityEvent.AuthenticationStatus &&
             event.state == AuthenticationState.REQUIRED && passwordResponseJob != null
         ) {
@@ -1095,8 +1103,6 @@ class BleSessionViewModel(application: Application) : AndroidViewModel(applicati
     @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
     fun setWheelLocked(locked: Boolean) {
         val command = if (locked) CommandType.LOCK else CommandType.UNLOCK
-        if (!isCommandSupported(command)) return
-
         sendCommand(command)
         requestWheelLockState()
     }

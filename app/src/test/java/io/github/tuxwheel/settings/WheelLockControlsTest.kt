@@ -1,58 +1,98 @@
 package io.github.tuxwheel.settings
 
+import android.app.Application
+import androidx.lifecycle.viewModelScope
+import androidx.test.core.app.ApplicationProvider
 import com.google.common.truth.Truth.assertThat
+import io.github.tritbool.euc.ble.EucBleClient
 import io.github.tritbool.euc.ble.core.BLEConstants
 import io.github.tritbool.euc.ble.models.EUCData
 import io.github.tritbool.euc.ble.models.WheelLockState
+import io.github.tritbool.euc.ble.models.WheelSecurityEvent
+import io.github.tritbool.euc.ble.protocols.CommandSupport
+import io.github.tritbool.euc.ble.protocols.CommandType
 import io.github.tuxwheel.ble.BleSessionState
+import io.github.tuxwheel.ble.BleSessionViewModel
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.verify
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.MutableStateFlow
+import org.junit.After
+import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
+@RunWith(RobolectricTestRunner::class)
+@Config(application = Application::class, sdk = [28])
 class WheelLockControlsTest {
-    private val now = 10_000L
-    private val connected = BleSessionState(
-        connectionState = BLEConstants.ConnectionState.CONNECTED,
-        wheelLockState = WheelLockState.LOCKED,
-    )
+    private lateinit var model: BleSessionViewModel
+    private val client = mockk<EucBleClient>(relaxed = true)
 
-    @Test fun `locked wheel can be unlocked without telemetry including after reconnect`() {
-        assertThat(canSetWheelLocked(connected, false, now)).isTrue()
-        assertThat(canSetWheelLocked(connected.copy(lastDataTimestamp = now - 5_000), false, now))
-            .isTrue()
+    @Before fun setup() {
+        model = BleSessionViewModel(ApplicationProvider.getApplicationContext())
+        model.javaClass.getDeclaredField("_eucBleClient\$delegate").apply { isAccessible = true }
+            .set(model, lazyOf(client))
+        every { client.getCommandSupport(any()) } returns CommandSupport.SUPPORTED
     }
 
-    @Test fun `locking requires fresh telemetry`() {
-        assertThat(canSetWheelLocked(connected, true, now)).isFalse()
-        assertThat(canSetWheelLocked(connected.copy(lastDataTimestamp = now - 5_000), true, now))
-            .isFalse()
-        assertThat(canSetWheelLocked(connected.copy(lastDataTimestamp = now + 1), true, now))
-            .isFalse()
-        assertThat(canSetWheelLocked(connected.copy(lastDataTimestamp = now - 4_999), true, now))
-            .isTrue()
+    @After fun cleanup() {
+        model.viewModelScope.cancel()
     }
 
-    @Test fun `disconnected wheel cannot be locked or unlocked`() {
-        val disconnected = connected.copy(
-            connectionState = BLEConstants.ConnectionState.DISCONNECTED,
-            lastDataTimestamp = now,
-        )
-        assertThat(canSetWheelLocked(disconnected, true, now)).isFalse()
-        assertThat(canSetWheelLocked(disconnected, false, now)).isFalse()
-    }
-
-    @Test fun `locking requires stationary wheel in either direction`() {
-        listOf(-5.0, -1.0, 1.0, 5.0, Double.NaN).forEach { speed ->
-            val state = connected.copy(lastDataTimestamp = now, lastData = data(speed))
-            assertThat(canSetWheelLocked(state, true, now)).isFalse()
+    @Test fun `every toggle sends the selected command even before lock status or telemetry arrives`() {
+        repeat(3) {
+            model.setWheelLocked(true)
+            model.setWheelLocked(false)
         }
-        listOf(-0.5, 0.0, 0.5).forEach { speed ->
-            val state = connected.copy(lastDataTimestamp = now, lastData = data(speed))
-            assertThat(canSetWheelLocked(state, true, now)).isTrue()
+        verify(exactly = 3) { client.sendCommand(CommandType.LOCK, Unit) }
+        verify(exactly = 3) { client.sendCommand(CommandType.UNLOCK, Unit) }
+        verify(exactly = 6) { client.sendCommand(CommandType.REQUEST_LOCK_STATE, Unit) }
+        verify(exactly = 0) { client.getCommandSupport(CommandType.LOCK) }
+        verify(exactly = 0) { client.getCommandSupport(CommandType.UNLOCK) }
+    }
+
+    @Test fun `speed telemetry age and reported lock state never suppress a selected command`() {
+        @Suppress("UNCHECKED_CAST")
+        val state = model.javaClass.getDeclaredField("_sessionState").apply { isAccessible = true }
+            .get(model) as MutableStateFlow<BleSessionState>
+        val states = WheelLockState.entries.flatMap { lockState ->
+            listOf(null, 1L, Long.MAX_VALUE).flatMap { timestamp ->
+                listOf(-5.0, 0.0, 5.0, Double.NaN).map { speed ->
+                    BleSessionState(
+                        connectionState = BLEConstants.ConnectionState.CONNECTED,
+                        wheelLockState = lockState,
+                        lastDataTimestamp = timestamp,
+                        lastData = data(speed),
+                    )
+                }
+            }
         }
+        states.forEach {
+            state.value = it
+            model.setWheelLocked(true)
+            model.setWheelLocked(false)
+        }
+        verify(exactly = states.size) { client.sendCommand(CommandType.LOCK, Unit) }
+        verify(exactly = states.size) { client.sendCommand(CommandType.UNLOCK, Unit) }
+    }
+
+    @Test fun `repeated wheel reports can correct an optimistic toggle without suppressing commands`() {
+        model.handleWheelSecurityEvent(WheelSecurityEvent.LockStatus(WheelLockState.UNLOCKED))
+        val revision = model.sessionState.value.wheelLockStateRevision
+        model.setWheelLocked(true)
+        model.handleWheelSecurityEvent(WheelSecurityEvent.LockStatus(WheelLockState.UNLOCKED))
+        assertThat(model.sessionState.value.wheelLockState).isEqualTo(WheelLockState.UNLOCKED)
+        assertThat(model.sessionState.value.wheelLockStateRevision).isEqualTo(revision + 1)
+        model.setWheelLocked(true)
+        verify(exactly = 2) { client.sendCommand(CommandType.LOCK, Unit) }
     }
 
     private fun data(speed: Double) = EUCData(
         speed = speed, voltage = 100.0, current = 0.0, temperature = 25.0, batteryLevel = 80,
-        distance = 0.0, power = 0.0, timestamp = now, rawData = byteArrayOf(),
+        distance = 0.0, power = 0.0, timestamp = 1L, rawData = byteArrayOf(),
         manufacturer = "KingSong", model = "KS", isCharging = false, rideTime = 0,
     )
 }
