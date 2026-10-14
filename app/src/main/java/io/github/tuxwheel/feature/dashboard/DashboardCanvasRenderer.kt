@@ -180,7 +180,7 @@ class DashboardCanvasRenderer(private val context: Context) {
             paint.textAlign = Paint.Align.RIGHT
             paint.textSize = (h / 50).roundToInt().toFloat()
             paint.color = paletteContext.getColorEx(R.color.wheelview_versiontext)
-            canvas.drawText("ver ${BuildConfig.VERSION_NAME} ${BuildConfig.BUILD_DATE}", w - 10 * density, h - 10 * density, paint)
+            canvas.drawText("ver ${BuildConfig.VERSION_NAME}", w - 10 * density, h - 10 * density, paint)
         }
     }
 }
