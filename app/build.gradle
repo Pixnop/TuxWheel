@@ -154,14 +154,24 @@ licenseReport {
     filters = [new LicenseBundleNormalizer()]
 }
 
-def generatedLicenseAssets = layout.buildDirectory.dir('generated/licenseAssets')
-def copyLicenseReportToAssets = tasks.register('copyLicenseReportToAssets', Sync) {
-    dependsOn tasks.named('generateLicenseReport')
-    from layout.buildDirectory.dir('reports/dependency-licenses')
-    into generatedLicenseAssets.map { it.dir('licenses') }
+abstract class SyncLicenseAssets extends Sync {
+    @OutputDirectory
+    abstract DirectoryProperty getOutputDirectory()
 }
 
-android.sourceSets.main.assets.srcDir(generatedLicenseAssets)
-tasks.named('preBuild') {
-    dependsOn copyLicenseReportToAssets
+def copyLicenseReportToAssets = tasks.register('copyLicenseReportToAssets', SyncLicenseAssets) {
+    dependsOn tasks.named('generateLicenseReport')
+    outputDirectory.set(layout.buildDirectory.dir('generated/licenseAssets'))
+    from(layout.buildDirectory.dir('reports/dependency-licenses')) {
+        into 'licenses'
+    }
+    into outputDirectory
+}
+
+androidComponents {
+    onVariants(selector().all()) { variant ->
+        variant.sources.assets.addGeneratedSourceDirectory(copyLicenseReportToAssets) {
+            it.outputDirectory
+        }
+    }
 }
