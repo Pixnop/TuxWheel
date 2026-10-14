@@ -39,19 +39,20 @@ internal class RawTrafficCapture {
     @Synchronized
     fun stop() {
         active = false
-        clear()
+        discardPending()
     }
 
     @Synchronized
     fun record(address: String, event: TrafficEvent, enabled: Boolean) {
         if (!enabled) {
-            clear()
+            discardPending()
         } else if (active && address.isNotBlank()) {
             pending.trySend(RawTrafficRecord(address, event))
         }
     }
 
-    private fun clear() {
+    @Synchronized
+    fun discardPending() {
         while (pending.tryReceive().isSuccess) {
             // Discard pending diagnostics when recording is disabled or stopped.
         }

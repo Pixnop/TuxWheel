@@ -101,6 +101,12 @@ class BleSessionViewModel(application: Application) : AndroidViewModel(applicati
         client.initialize()
         setupCallbacks(client)
 
+        viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {
+            appConfig.rawLoggingPreferences().collect { enabled ->
+                if (!enabled) rawTraffic.discardPending()
+            }
+        }
+
         // Subscribe before the lazy client can be used to connect: trafficFlow has no replay.
         viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {
             client.trafficFlow.collect { event ->

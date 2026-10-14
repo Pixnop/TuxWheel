@@ -77,4 +77,14 @@ class RawTrafficCaptureTest {
         capture.record(address, event(2), true)
         assertThat(next.await().event.sequence).isEqualTo(2L)
     }
+
+    @Test fun `disabling diagnostics clears initialization even without another BLE event`() = runTest {
+        val capture = RawTrafficCapture()
+        capture.record(address, event(1), true)
+        capture.discardPending()
+        val next = async(start = CoroutineStart.UNDISPATCHED) { capture.records.first() }
+        assertThat(next.isCompleted).isFalse()
+        capture.record(address, event(2), true)
+        assertThat(next.await().event.sequence).isEqualTo(2L)
+    }
 }

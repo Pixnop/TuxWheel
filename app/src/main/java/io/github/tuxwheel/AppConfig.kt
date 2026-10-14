@@ -275,7 +275,7 @@ class AppConfig(var context: Context) : KoinComponent {
         sharedPreferences.registerOnSharedPreferenceChangeListener(listener)
         trySend(enableRawData)
         awaitClose { sharedPreferences.unregisterOnSharedPreferenceChangeListener(listener) }
-    }.conflate().distinctUntilChanged()
+    }.distinctUntilChanged()
 
     var enableBmsData: Boolean
         get() = getValue(R.string.use_bms_data, false)
