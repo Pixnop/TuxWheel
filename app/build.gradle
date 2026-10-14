@@ -78,6 +78,7 @@ android {
     lint {
         abortOnError false
         disable 'ComposableNaming'
+        baseline = file("lint-baseline.xml")
     }
     namespace 'io.github.tuxwheel'
 }
