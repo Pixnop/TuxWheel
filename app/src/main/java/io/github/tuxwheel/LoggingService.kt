@@ -1,6 +1,7 @@
 package io.github.tuxwheel
 
 import io.github.tuxwheel.ble.BleSessionViewModel
+import io.github.tuxwheel.ble.RawTrafficRecord
 
 import android.app.Service
 import android.content.*
@@ -18,6 +19,7 @@ import io.github.tritbool.euc.ble.models.BMSData
 import io.github.tuxwheel.utils.PermissionsUtil.checkExternalFilePermission
 import io.github.tritbool.euc.ble.core.BLEConstants
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.collectLatest
 import org.koin.android.ext.android.inject
 import timber.log.Timber
 import java.text.SimpleDateFormat
@@ -39,6 +41,7 @@ class LoggingService : Service() {
     private var lastLoggedTimestamp: Long? = null
 
     private var rawFileUtil: FileUtil? = null
+    private var rawFileAddress: String? = null
     private var rawLoggingJob: Job? = null
 
     private var bmsFileUtil: FileUtil? = null
@@ -49,7 +52,6 @@ class LoggingService : Service() {
         if (connectionState != BLEConstants.ConnectionState.CONNECTED) {
             // Park logging: nothing is appended until fresh telemetry arrives again.
             lastLoggedTimestamp = null
-            closeRawFile()
             closeBmsFile()
         }
     }
@@ -75,7 +77,7 @@ class LoggingService : Service() {
             }
             logStarted = true
             observeTelemetry()
-            if (appConfig.enableRawData) observeRawFrames()
+            observeRawTraffic()
         }
         return START_STICKY
     }
@@ -192,24 +194,31 @@ class LoggingService : Service() {
     }
 
 
-    private fun observeRawFrames() {
+    private fun observeRawTraffic() {
         rawLoggingJob?.cancel()
+        viewModel.rawTraffic.start()
 
         rawLoggingJob = ioState.launch {
-            viewModel.rawFrames.collect { frame ->
-                if (!appConfig.enableRawData) {
-                    closeRawFile()
-                    return@collect
+            try {
+                appConfig.rawLoggingPreferences().collectLatest { enabled ->
+                    if (enabled) {
+                        viewModel.rawTraffic.start()
+                        try {
+                            viewModel.rawTraffic.records.collect { record ->
+                                if (appConfig.enableRawData) {
+                                    val rawFile = getOrCreateRawFile(record.address) ?: return@collect
+                                    rawFile.writeLine(record.toCsvLine())
+                                }
+                            }
+                        } finally {
+                            closeRawFile()
+                        }
+                    } else {
+                        viewModel.rawTraffic.stop()
+                    }
                 }
-
-                val rawFile = getOrCreateRawFile() ?: return@collect
-                val hex = frame.joinToString(separator = "") { byte ->
-                    "%02X".format(Locale.US, byte.toInt() and 0xFF)
-                }
-
-                rawFile.writeLine(
-                    "${System.currentTimeMillis()},$hex"
-                )
+            } finally {
+                closeRawFile()
             }
         }
     }
@@ -217,6 +226,7 @@ class LoggingService : Service() {
     private fun closeRawFile() {
         rawFileUtil?.close()
         rawFileUtil = null
+        rawFileAddress = null
     }
 
     private fun closeBmsFile() {
@@ -226,20 +236,22 @@ class LoggingService : Service() {
         lastBmsWriteTimestamp = 0L
     }
 
-    private fun getOrCreateRawFile(): FileUtil? {
+    private fun getOrCreateRawFile(address: String): FileUtil? {
+        if (rawFileAddress != address) closeRawFile()
         rawFileUtil?.let { return it }
 
-        val rawFile = FileUtil(applicationContext)
+        val rawFile = FileUtil(applicationContext, buffered = true)
         val formatter = SimpleDateFormat("yyyy_MM_dd_HH_mm_ss", Locale.US)
         val filename = "${formatter.format(Date())}.raw.csv"
 
-        if (!rawFile.prepareFile(filename, viewModel.mac)) {
+        if (!rawFile.prepareFile(filename, address)) {
             Timber.e("Unable to create RAW BLE log file")
             return null
         }
 
-        rawFile.writeLine("timestamp_ms,hex")
+        rawFile.writeLine(RawTrafficRecord.CSV_HEADER)
         rawFileUtil = rawFile
+        rawFileAddress = address
         Timber.i("RAW BLE logging started: %s", rawFile.absolutePath)
         return rawFile
     }
@@ -318,11 +330,11 @@ class LoggingService : Service() {
     }
 
     override fun onDestroy() {
+        viewModel.rawTraffic.stop()
         ioState.cancel()
         val path = fileUtil?.absolutePath
         rawLoggingJob?.cancel()
         rawLoggingJob = null
-        closeRawFile()
         closeBmsFile()
         fileUtil?.close()
         fileUtil = null

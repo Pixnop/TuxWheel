@@ -33,6 +33,7 @@ import io.github.tritbool.euc.ble.protocols.CommandType
 import io.github.tritbool.euc.ble.protocols.EUCProtocol
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
@@ -77,10 +78,8 @@ class BleSessionViewModel(application: Application) : AndroidViewModel(applicati
     val sessionState: StateFlow<BleSessionState> = _sessionState.asStateFlow()
 
 
-    private val _rawFrames = MutableSharedFlow<ByteArray>(
-        extraBufferCapacity = 256,
-    )
-    val rawFrames: SharedFlow<ByteArray> = _rawFrames.asSharedFlow()
+    internal val rawTraffic = RawTrafficCapture()
+    private var rawTrafficAddress = ""
 
     private val _bmsSnapshots = MutableSharedFlow<List<BMSData>>(
         replay = 1,
@@ -102,9 +101,10 @@ class BleSessionViewModel(application: Application) : AndroidViewModel(applicati
         client.initialize()
         setupCallbacks(client)
 
-        viewModelScope.launch {
-            client.rawFrameFlow.collect { frame ->
-                _rawFrames.emit(frame)
+        // Subscribe before the lazy client can be used to connect: trafficFlow has no replay.
+        viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {
+            client.trafficFlow.collect { event ->
+                rawTraffic.record(rawTrafficAddress, event, appConfig.enableRawData)
             }
         }
 
@@ -820,6 +820,8 @@ class BleSessionViewModel(application: Application) : AndroidViewModel(applicati
         viewModelScope.launch {
             try {
                 prepareForConnection()
+                rawTrafficAddress = device.address
+                rawTraffic.start()
                 _eucBleClient.connect(device)
                 Timber.i("Connecting to device: %s", device.address)
             } catch (e: Exception) {
@@ -877,6 +879,8 @@ class BleSessionViewModel(application: Application) : AndroidViewModel(applicati
                     manufacturerId = -1,
                     rssi = 0
                 )
+                rawTrafficAddress = mac
+                rawTraffic.start()
                 _eucBleClient.connect(device)
                 Timber.i("Connecting to device by address: %s (%s)", mac, resolvedName)
             } catch (e: Exception) {

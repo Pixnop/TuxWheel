@@ -268,6 +268,15 @@ class AppConfig(var context: Context) : KoinComponent {
         get() = getValue(R.string.use_raw_data, false)
         set(value) = setValue(R.string.use_raw_data, value)
 
+    fun rawLoggingPreferences(): Flow<Boolean> = callbackFlow {
+        val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+            if (key == null || getResId(key) == R.string.use_raw_data) trySend(enableRawData)
+        }
+        sharedPreferences.registerOnSharedPreferenceChangeListener(listener)
+        trySend(enableRawData)
+        awaitClose { sharedPreferences.unregisterOnSharedPreferenceChangeListener(listener) }
+    }.conflate().distinctUntilChanged()
+
     var enableBmsData: Boolean
         get() = getValue(R.string.use_bms_data, false)
         set(value) = setValue(R.string.use_bms_data, value)

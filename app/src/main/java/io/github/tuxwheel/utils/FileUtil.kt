@@ -18,7 +18,7 @@ import java.util.Date
 import java.util.Hashtable
 import java.util.Locale
 
-class FileUtil(val context: Context) {
+class FileUtil(val context: Context, private val buffered: Boolean = false) {
     var file: File? = null
         private set
     private var uri: Uri? = null
@@ -113,6 +113,7 @@ class FileUtil(val context: Context) {
             } else if (file != null) {
                 stream = FileOutputStream(file, true)
             }
+            if (buffered) stream = stream?.buffered()
         } catch (e: FileNotFoundException) {
             if (!ignoreTimber) {
                 Timber.e("File not found.")
@@ -176,7 +177,7 @@ class FileUtil(val context: Context) {
         }
         try {
             stream!!.write((line + "\r\n").toByteArray())
-            stream!!.flush()
+            if (!buffered) stream!!.flush()
         } catch (e: IOException) {
             if (!ignoreTimber) {
                 Timber.wtf("IOException %s", e.message)

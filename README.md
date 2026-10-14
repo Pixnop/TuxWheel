@@ -110,6 +110,21 @@ Storage access follows the Android version's permission and storage rules.
 Enable the trips page to inspect recorded ride statistics, share a CSV through
 Android's share chooser, or delete a trip after confirmation.
 Raw BLE logging is a separate diagnostic option, not a substitute for ride CSVs.
+While the logging service runs, it records received BLE chunks (RX) and outgoing
+writes accepted by Android (TX) to `yyyy_MM_dd_HH_mm_ss.raw.csv` in the wheel's
+Downloads/TuxWheel subfolder. TX does not confirm wheel delivery or execution.
+The raw CSV columns are `timestamp_ms,hex,type,sequence,characteristic_uuid`;
+`type` is `RX` or `TX`. Timestamps and sequence numbers come from the library,
+not file-write time. Use sequence order, since wall-clock timestamps can move
+backwards. Chunk boundaries are preserved; chunks need not be complete frames.
+
+Capture subscribes before connecting, with a bounded 256-event pending buffer
+for recent initialization traffic until the service starts. Capture is best-effort:
+sequence gaps indicate dropped events. Consumed events are not replayed when
+logging restarts. Disabling raw logging or stopping the service clears pending
+events; reconnecting arms capture again if raw logging is enabled. Raw file I/O
+is buffered on a background dispatcher and flushed on close. Only RX records
+should be used as input to a decoder or replay tool; ride and BMS CSVs are unchanged.
 
 Before sharing CSVs or diagnostic logs, inspect and sanitize them:
 remove MAC addresses, device names, location/route data, and other identifiers.
@@ -121,6 +136,13 @@ BLE is provided by [EUC_BLE_LIBRARY](https://github.com/Tritbool/euc_ble_library
 not by wheel protocol decoders embedded in this app.
 The dependency is `io.github.tritbool:euc-ble-library:0.1.0`;
 its version is pinned in `gradle/libs.versions.toml`.
+
+Raw diagnostics now target the `trafficFlow` / `TrafficEvent` API merged in
+[EUC_BLE_LIBRARY PR #69](https://github.com/Tritbool/euc_ble_library/pull/69).
+That API has not yet been published in the pinned library release. The pin is
+intentionally unchanged: update it to the release containing PR #69 when
+published before building this migration. No speculative version or snapshot
+repository is used.
 
 The library owns discovery/scanning, connections, protocol detection/decoding,
 and BLE transport. The app's `BleSessionViewModel` wraps library callbacks
