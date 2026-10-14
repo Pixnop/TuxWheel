@@ -1,0 +1,5 @@
+Première version de TuxWheel.
+- Connexion Bluetooth Low Energy et télémétrie en direct.
+- Tableau de bord personnalisable, réglages et alarmes compatibles.
+- Détails Smart BMS sur les roues prises en charge.
+- Journaux CSV, trajets et diagnostics BLE bruts facultatifs.

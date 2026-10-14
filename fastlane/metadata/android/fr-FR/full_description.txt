@@ -1,0 +1,21 @@
+<p>TuxWheel est une application Android libre pour les gyroroues. Connectez votre roue en Bluetooth Low Energy pour consulter la télémétrie en direct, modifier les réglages pris en charge et enregistrer vos trajets.</p>
+
+<p><b>Fonctionnalités</b></p>
+<ul>
+<li>Tableau de bord personnalisable avec blocs et jauges, thèmes Original et AJDM.</li>
+<li>Vitesse, batterie, température, courant, PWM et autres mesures disponibles.</li>
+<li>Réglages et commandes selon le modèle et le micrologiciel de la roue.</li>
+<li>Alarmes et graphiques configurables, pages facultatives de trajets et d'événements.</li>
+<li>Détails Smart BMS avec mesures par batterie et tensions des cellules sur les roues compatibles.</li>
+<li>Enregistrement CSV par un service de premier plan, dans Downloads/TuxWheel.</li>
+<li>Journaux Bluetooth bruts facultatifs, partage des CSV et mode image dans l'image.</li>
+<li>Choix des unités de vitesse, de distance et de température.</li>
+</ul>
+
+<p>La bibliothèque EUC_BLE_LIBRARY prend en charge les familles KingSong, Gotway/Begode, Veteran, InMotion et Ninebot. La connexion et les fonctions disponibles dépendent du modèle, du micrologiciel et de la bibliothèque ; toutes les fonctions ne sont pas disponibles sur toutes les roues.</p>
+
+<p><b>Confidentialité et autorisations</b></p>
+<p>Aucun compte, publicité, traqueur ou envoi automatique de données. La télémétrie et les journaux sont traités localement ; aucune connexion Internet n'est nécessaire pour le tableau de bord ou l'enregistrement. Le partage d'un journal passe par le sélecteur Android et l'application choisie. Vérifiez les noms d'appareils, adresses Bluetooth et autres identifiants avant tout partage.</p>
+<p>Les autorisations Bluetooth sont nécessaires à la connexion. Sur les anciennes versions d'Android, la recherche BLE nécessite aussi l'autorisation de localisation et parfois l'activation de la localisation système ; TuxWheel n'enregistre pas de traces GPS. Les autorisations de notification et de stockage servent à l'enregistrement lorsque le système les exige.</p>
+
+<p>Nécessite Android 6.0 ou ultérieur et du matériel Bluetooth Low Energy. Vérifiez les réglages à l'arrêt. Les alarmes de l'application ne remplacent pas les protections de la roue.</p>
