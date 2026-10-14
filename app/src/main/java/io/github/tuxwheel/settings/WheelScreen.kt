@@ -157,6 +157,12 @@ private fun lockSetting(viewModel: BleSessionViewModel) {
     if (!supportsLock && !supportsUnlock) return
 
     val state by viewModel.sessionState.collectAsState()
+    val canChangeLock = {
+        val latest = viewModel.sessionState.value
+        latest.isConnected &&
+                latest.lastDataTimestamp?.let { System.currentTimeMillis() - it < 5_000L } == true &&
+                viewModel.speed < 1
+    }
     val lockStatus = when (state.wheelLockState) {
         WheelLockState.LOCKED -> stringResource(R.string.wheel_lock_status_locked)
         WheelLockState.UNLOCKED -> stringResource(R.string.wheel_lock_status_unlocked)
@@ -171,16 +177,16 @@ private fun lockSetting(viewModel: BleSessionViewModel) {
         clickableAndAlert(
             name = stringResource(R.string.lock_wheel),
             alertDesc = stringResource(R.string.lock_wheel_confirmation),
-            condition = { viewModel.speed < 1 },
-            onConfirm = { viewModel.sendCommand(CommandType.LOCK) },
+            condition = canChangeLock,
+            onConfirm = { if (canChangeLock()) viewModel.sendCommand(CommandType.LOCK) },
         )
     }
     if (supportsUnlock) {
         clickableAndAlert(
             name = stringResource(R.string.unlock_wheel),
             alertDesc = stringResource(R.string.unlock_wheel_confirmation),
-            condition = { viewModel.speed < 1 },
-            onConfirm = { viewModel.sendCommand(CommandType.UNLOCK) },
+            condition = canChangeLock,
+            onConfirm = { if (canChangeLock()) viewModel.sendCommand(CommandType.UNLOCK) },
         )
     }
 }
