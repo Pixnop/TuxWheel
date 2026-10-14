@@ -1090,6 +1090,17 @@ class BleSessionViewModel(application: Application) : AndroidViewModel(applicati
         _eucBleClient.sendCommand(commandType, value)
     }
 
+    @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
+    fun setWheelLocked(locked: Boolean) {
+        val command = if (locked) CommandType.LOCK else CommandType.UNLOCK
+        if (!isCommandSupported(command)) return
+
+        sendCommand(command)
+        if (isCommandSupported(CommandType.REQUEST_LOCK_STATE)) {
+            sendCommand(CommandType.REQUEST_LOCK_STATE)
+        }
+    }
+
     fun isCommandSupported(commandType: CommandType): Boolean {
         return _eucBleClient.getCommandSupport(commandType) == CommandSupport.SUPPORTED
     }

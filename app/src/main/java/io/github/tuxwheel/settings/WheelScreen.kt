@@ -178,7 +178,7 @@ private fun lockSetting(viewModel: BleSessionViewModel) {
             name = stringResource(R.string.lock_wheel),
             alertDesc = stringResource(R.string.lock_wheel_confirmation),
             condition = canChangeLock,
-            onConfirm = { if (canChangeLock()) viewModel.sendCommand(CommandType.LOCK) },
+            onConfirm = { if (canChangeLock()) viewModel.setWheelLocked(true) },
         )
     }
     if (supportsUnlock) {
@@ -186,7 +186,7 @@ private fun lockSetting(viewModel: BleSessionViewModel) {
             name = stringResource(R.string.unlock_wheel),
             alertDesc = stringResource(R.string.unlock_wheel_confirmation),
             condition = canChangeLock,
-            onConfirm = { if (canChangeLock()) viewModel.sendCommand(CommandType.UNLOCK) },
+            onConfirm = { if (canChangeLock()) viewModel.setWheelLocked(false) },
         )
     }
 }
