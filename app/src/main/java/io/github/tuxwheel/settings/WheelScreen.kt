@@ -154,21 +154,18 @@ private fun connectBeepSetting(appConfig: AppConfig, viewModel: BleSessionViewMo
 private fun lockSetting(appConfig: AppConfig, viewModel: BleSessionViewModel) {
     val supportsLock = viewModel.isCommandSupported(CommandType.LOCK)
     val supportsUnlock = viewModel.isCommandSupported(CommandType.UNLOCK)
-    if (!supportsLock && !supportsUnlock) return
+    val supportsLockState = viewModel.isCommandSupported(CommandType.REQUEST_LOCK_STATE)
+    if (!(supportsLock && supportsUnlock && supportsLockState)) return
 
     val state by viewModel.sessionState.collectAsState()
-    val isLockStateSupported = viewModel.isCommandSupported(CommandType.REQUEST_LOCK_STATE)
-    val checkedState = remember { mutableStateOf(appConfig.wheelLocked) }
+    val checkedState = remember(state.selectedDevice?.address) { mutableStateOf(appConfig.wheelLocked) }
     androidx.compose.runtime.LaunchedEffect(
         state.selectedDevice?.address,
         state.isConnected,
-        isLockStateSupported,
     ) {
-        if (state.isConnected && isLockStateSupported) {
-            viewModel.requestWheelLockState()
-        }
+        viewModel.requestWheelLockState()
     }
-    androidx.compose.runtime.LaunchedEffect(state.wheelLockState) {
+    androidx.compose.runtime.LaunchedEffect(state.selectedDevice?.address, state.wheelLockState) {
         when (state.wheelLockState) {
             WheelLockState.LOCKED -> {
                 checkedState.value = true
@@ -181,53 +178,13 @@ private fun lockSetting(appConfig: AppConfig, viewModel: BleSessionViewModel) {
             WheelLockState.UNKNOWN -> Unit
         }
     }
-    val canChangeLock = { locked: Boolean ->
-        canSetWheelLocked(viewModel.sessionState.value, locked)
-    }
-    if (supportsLock && supportsUnlock) {
-        switchPref(
-            name = stringResource(R.string.lock_mode_title),
-            desc = stringResource(R.string.lock_mode_description),
-            defaultState = checkedState,
-            enabled = canChangeLock(!checkedState.value) &&
-                    (!isLockStateSupported || state.wheelLockState != WheelLockState.UNKNOWN),
-        ) { checked ->
-            if (isLockStateSupported) {
-                checkedState.value = state.wheelLockState == WheelLockState.LOCKED
-            }
-            if (canChangeLock(checked)) {
-                viewModel.setWheelLocked(checked)
-                if (!isLockStateSupported) appConfig.wheelLocked = checked
-            } else if (!isLockStateSupported) {
-                checkedState.value = !checked
-            }
-        }
-    } else {
-        val lockStatus = when (state.wheelLockState) {
-            WheelLockState.LOCKED -> stringResource(R.string.wheel_lock_status_locked)
-            WheelLockState.UNLOCKED -> stringResource(R.string.wheel_lock_status_unlocked)
-            WheelLockState.UNKNOWN -> stringResource(R.string.wheel_lock_status_unknown)
-        }
-        baseSettings(
-            name = stringResource(R.string.wheel_lock_status_title),
-            rightContent = { Text(lockStatus) },
-        )
-        if (supportsLock) {
-            clickableAndAlert(
-                name = stringResource(R.string.lock_wheel),
-                alertDesc = stringResource(R.string.lock_wheel_confirmation),
-                condition = { canChangeLock(true) },
-                onConfirm = { if (canChangeLock(true)) viewModel.setWheelLocked(true) },
-            )
-        }
-        if (supportsUnlock) {
-            clickableAndAlert(
-                name = stringResource(R.string.unlock_wheel),
-                alertDesc = stringResource(R.string.unlock_wheel_confirmation),
-                condition = { canChangeLock(false) },
-                onConfirm = { if (canChangeLock(false)) viewModel.setWheelLocked(false) },
-            )
-        }
+    switchPref(
+        name = stringResource(R.string.lock_mode_title),
+        desc = stringResource(R.string.lock_mode_description),
+        defaultState = checkedState,
+    ) { checked ->
+        appConfig.wheelLocked = checked
+        viewModel.setWheelLocked(checked)
     }
 }
 

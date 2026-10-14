@@ -1095,8 +1095,6 @@ class BleSessionViewModel(application: Application) : AndroidViewModel(applicati
     @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
     fun setWheelLocked(locked: Boolean) {
         val command = if (locked) CommandType.LOCK else CommandType.UNLOCK
-        if (!isCommandSupported(command)) return
-
         sendCommand(command)
         requestWheelLockState()
     }
