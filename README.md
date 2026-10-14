@@ -139,6 +139,22 @@ Architecture decisions:
 [Compose-first dashboard](docs/adr/001-compose-first-dashboard.md) ·
 [Koin DI](docs/adr/002-koin-di.md)
 
+## Third-party software and licenses
+
+Open **Settings → About TuxWheel → Third-party software and licenses** to
+read the bundled dependency list and existing asset/license notices offline.
+The viewer includes the GPL-3.0 and Source Sans Pro OFL texts.
+
+The [dependency inventory](app/src/main/assets/licenses/third_party_dependencies.txt)
+lists direct app dependencies, their declared versions, upstream sources and
+licenses; debug-only tooling is identified separately. It is not a complete
+resolved transitive dependency report. Build plugins, annotation processors
+and test-only libraries are outside its scope.
+
+When changing `app/build.gradle` or `gradle/libs.versions.toml`, update this
+inventory too. Preserve the notices under `app/src/main/assets/licenses/`
+and review the resolved release dependency graph before distributing a release.
+
 ## Development
 
 Use Android Studio/SDK tooling and the checked-in Gradle wrapper.
