@@ -89,6 +89,7 @@ fun switchPref(
     desc: String = "",
     default: Boolean = false,
     defaultState: MutableState<Boolean>? = null,
+    enabled: Boolean = true,
     showDiv: Boolean = true,
     onClick: (checked: Boolean) -> Unit
 ) {
@@ -101,6 +102,7 @@ fun switchPref(
         rightContent = {
             Switch(
                 checked = mutableState.value,
+                enabled = enabled,
                 onCheckedChange = {
                     mutableState.value = it
                     onClick(it)

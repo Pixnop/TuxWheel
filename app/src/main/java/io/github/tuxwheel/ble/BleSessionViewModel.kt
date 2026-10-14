@@ -428,7 +428,8 @@ class BleSessionViewModel(application: Application) : AndroidViewModel(applicati
             lastData = null,
             lastDataTimestamp = null,
             lastError = null,
-            isScanning = false
+            isScanning = false,
+            wheelLockState = WheelLockState.UNKNOWN
         )
         _bmsDisplay.value = captureBmsDisplay()
 
@@ -457,7 +458,8 @@ class BleSessionViewModel(application: Application) : AndroidViewModel(applicati
             // keep treating the last received sample as fresh.
             lastDataTimestamp = null,
             protocolSelectionRequired = false,
-            protocolCandidates = emptyList()
+            protocolCandidates = emptyList(),
+            wheelLockState = WheelLockState.UNKNOWN
         )
         _bmsDisplay.value = captureBmsDisplay()
 
@@ -1096,6 +1098,20 @@ class BleSessionViewModel(application: Application) : AndroidViewModel(applicati
         if (!isCommandSupported(command)) return
 
         sendCommand(command)
+        requestWheelLockState()
+    }
+
+    @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
+    fun toggleWheelLock() {
+        when (_sessionState.value.wheelLockState) {
+            WheelLockState.LOCKED -> setWheelLocked(false)
+            WheelLockState.UNLOCKED -> setWheelLocked(true)
+            WheelLockState.UNKNOWN -> requestWheelLockState()
+        }
+    }
+
+    @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
+    fun requestWheelLockState() {
         if (isCommandSupported(CommandType.REQUEST_LOCK_STATE)) {
             sendCommand(CommandType.REQUEST_LOCK_STATE)
         }

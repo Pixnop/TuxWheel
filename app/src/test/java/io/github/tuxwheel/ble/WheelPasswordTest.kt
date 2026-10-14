@@ -67,17 +67,20 @@ class WheelPasswordTest {
         assertThat(model.sessionState.value.wheelLockState).isEqualTo(WheelLockState.UNKNOWN)
     }
 
-    @Test fun `lock and unlock request wheel-confirmed lock state afterward`() {
+    @Test fun `lock toggle chooses command from wheel state and queries when unknown`() {
         every { client.getCommandSupport(CommandType.LOCK) } returns CommandSupport.SUPPORTED
         every { client.getCommandSupport(CommandType.UNLOCK) } returns CommandSupport.SUPPORTED
         every { client.getCommandSupport(CommandType.REQUEST_LOCK_STATE) } returns CommandSupport.SUPPORTED
 
-        model.setWheelLocked(true)
-        model.setWheelLocked(false)
+        model.toggleWheelLock()
+        model.updateWheelSecurity(WheelSecurityState(lock = WheelLockState.UNLOCKED))
+        model.toggleWheelLock()
+        model.updateWheelSecurity(WheelSecurityState(lock = WheelLockState.LOCKED))
+        model.toggleWheelLock()
 
         verify(exactly = 1) { client.sendCommand(CommandType.LOCK, Unit) }
         verify(exactly = 1) { client.sendCommand(CommandType.UNLOCK, Unit) }
-        verify(exactly = 2) { client.sendCommand(CommandType.REQUEST_LOCK_STATE, Unit) }
+        verify(exactly = 3) { client.sendCommand(CommandType.REQUEST_LOCK_STATE, Unit) }
     }
 
     @Test fun `validate ASCII digits and preserve leading zeros without sending unlock`() {
