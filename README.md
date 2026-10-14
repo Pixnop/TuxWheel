@@ -205,53 +205,71 @@ within 4,000, and release notes within 500. Add
   Packaging now merges bundled `META-INF/LICENSE*`, `META-INF/NOTICE*` and
   `META-INF/ASL2.0` resources instead of discarding them; inspect the release APK
   and complete the dependency inventory as part of the license review.
-  Include the pinned EUC BLE library's source/license and MPAndroidChart's
-  Apache-2.0 source at tag `v3.1.0` in that review. JitPack remains necessary
-  for MPAndroidChart; disclose it to F-Droid reviewers rather than adding
-  scanner exceptions to hide it.
-- Confirm redistributable licenses and attribution for bundled artwork and
-  fonts. In particular, `app/src/main/res/font/ajdm.otf` identifies itself as
-  Adobe Source Sans Pro under SIL OFL 1.1; retain its copyright and full OFL
-  notice. Establish the provenance/license of `prime_regular.otf` (internally
-  named Wheellog) and the app icon before claiming the asset audit is complete.
-  No generated third-party license inventory is currently provided.
+  The verified licenses and asset sources are listed below.
 
-### Cleanup audit: retained components and remaining work
+### Verified licenses and F-Droid policy
 
-The cleanup removed the old mandatory consent to **WheelLog's** privacy policy
-and terms (not TuxWheel's), its dialog/preferences/resources, automatic public
-debug HTML logging, an unused custom permission, the direct Guava dependency,
-the unused wake-lock permission, dead upload/open-in-external-app icons and
-analytics/watch preference remnants. File reads use the
-Kotlin standard library and close their streams. Compose inspection tooling is
-debug-only; lightweight preview annotations remain available when compiling
-release sources. These AndroidX/Guava/tooling libraries are FOSS, not trackers:
-their removal/re-scoping is an efficiency improvement, not an F-Droid ban.
-No analytics SDK, account service, GPS recorder or automatic uploader was found
-in the app's runtime source. The unresolved build prevents a complete
-transitive-dependency/merged-release-APK audit.
+The [F-Droid inclusion policy](https://f-droid.org/docs/Inclusion_Policy/)
+requires freely licensed source and dependencies, a free build toolchain and
+a working build. It does **not** require removing functional FOSS libraries,
+BLE permissions, storage access or foreground services. It explicitly permits
+freely licensed binaries from trusted repositories including JitPack.
 
-Do **not** simply delete these remaining components:
+- **Inherited WheelLog assets:** the maintainer confirms that the inherited
+  fonts/theme artwork come from GPL-3.0 WheelLog Android. Its
+  [GPL license](https://github.com/Wheellog/Wheellog.Android/blob/f44e39e5388e500a5d2f315d1dcf32f167607bf8/LICENSE)
+  covers the project except components with their own license.
+  Both bundled fonts match
+  [WheelLog's font files](https://github.com/Wheellog/Wheellog.Android/tree/f44e39e5388e500a5d2f315d1dcf32f167607bf8/app/src/main/res/font)
+  byte-for-byte (Git blob IDs are recorded in the packaged notice).
+  `prime_regular.otf` is the inherited Wheellog font, not an identified
+  proprietary dependency.
+- **Source Sans Pro:** `ajdm.otf` also matches Adobe's
+  [Source Sans Pro Regular 2.020](https://github.com/adobe-fonts/source-sans/blob/2.020R-ro/1.075R-it/OTF/SourceSansPro-Regular.otf)
+  byte-for-byte. It remains under **SIL OFL 1.1**, not GPL.
+  The original copyright notice and full OFL text are bundled at
+  `app/src/main/assets/licenses/SourceSansPro-OFL.txt`.
+- **EUC_BLE_LIBRARY 0.1.0:** the maintainer's own open-source library, with a
+  [GPL-3.0 license at the pinned tag](https://github.com/Tritbool/euc_ble_library/blob/0.1.0/LICENSE).
+  Its [publication configuration](https://github.com/Tritbool/euc_ble_library/blob/0.1.0/euc-ble-core/build.gradle.kts)
+  still labels the POM license as MIT. Both licenses are FOSS, but that upstream
+  metadata should be aligned with the intended license; this app retains the
+  tagged GPL notice rather than assuming that the POM relicenses the source.
+- **MPAndroidChart v3.1.0:** the
+  [tagged Apache-2.0 license](https://github.com/PhilJay/MPAndroidChart/blob/v3.1.0/LICENSE)
+  permits its use here. Obtaining it from JitPack is not by itself an
+  F-Droid incompatibility.
+- **AndroidX legacy-support/Media:** FOSS dependencies, not prohibited SDKs.
+  The umbrella dependency currently supplies the Media classes used by
+  hardware-volume-key controls. Keeping it is compliant; replacing it with a
+  direct Media dependency is optional dependency cleanup, not submission work.
 
-| Component | Why retained / what removal would require |
-| --- | --- |
-| `prime_regular.otf`, `ajdm.otf` and theme artwork | The dashboard, PiP, lists, clock and notification layouts reference the fonts; deleting them would break resource compilation or rendering. Establish provenance and preserve the required font licenses/notices, or replace fonts with system fonts across View/Compose/Canvas and verify both themes. Artwork/icon licensing also needs confirmation; unknown provenance is not proof of a proprietary license. |
-| EUC_BLE_LIBRARY | Required for scanning, connection, telemetry and commands. Verify the published version's source/license and transitives. Removal needs a replacement BLE/protocol implementation. |
-| MPAndroidChart / JitPack | The chart page still embeds MPAndroidChart. It is Apache-2.0, not known to be F-Droid-incompatible merely because it uses JitPack. Removing it requires migrating the chart renderer or deliberately removing the chart feature; review source/build provenance with the packager. |
-| AndroidX legacy-support umbrella dependency | `VolumeKeyController` still imports `android.support.v4.media.session.MediaSessionCompat`, `PlaybackStateCompat` and `androidx.media.VolumeProviderCompat`, supplied transitively through this dependency. Deleting the umbrella breaks compilation despite no `androidx.legacy` imports. Replace it with a verified direct AndroidX Media dependency or migrate hardware-volume-key handling before removing it. It is FOSS, not an F-Droid incompatibility. |
-| Location permission on Android 6–11 | Required for legacy BLE discovery, not GPS logging. Removing it prevents scanning on those devices; Android 12+ uses Nearby devices permissions instead. |
-| Legacy storage permissions and public CSV logs | Used for existing CSV logging/trips, especially on older Android. Removing these requires a private-storage/explicit import-export migration and compatibility testing, not simply deleting permissions. User-controlled sharing and raw BLE logs can expose wheel identifiers; sanitize exports. |
-| Foreground service, notifications and battery-optimization exemption option | Support background ride logging and its controls. Removal requires redesign/testing of background recording and may stop logs with the screen off. |
+Attribution and source references are bundled in
+`app/src/main/assets/licenses/NOTICE.txt`. GPL text is in the repository's
+`LICENSE` and bundled as `app/src/main/assets/licenses/GPL-3.0.txt`.
+No font, chart or BLE replacement is needed on the basis of these licenses.
 
-There is no claim that all dependencies/assets are already F-Droid-approved.
-The license/provenance audit, a successful clean release build, F-Droid's scanner
-and real-device testing are still required. Optional chart removal or storage/font
-migration should be separate changes rather than silent feature regressions.
+The location permission is limited to Android 6–11 for BLE discovery, not GPS
+recording. Storage permissions support CSV logging on older Android, and the
+foreground service/notification and battery-optimization option support
+background logging. None is an F-Droid incompatibility; they remain in place.
+
+The earlier cleanup removed unused proprietary Samsung SDK binaries, unrelated
+WheelLog consent, unsolicited debug HTML files and dead feature remnants.
+No runtime analytics SDK, account service or automatic uploader was found.
+Internet access and automatic app backup are disabled.
+
+The remaining verification is operational: a clean release build and F-Droid's
+dependency/scanner checks on the tagged source. The local AGP resolution failure
+prevents checking the resolved transitive graph and final APK here; it is not
+evidence that the libraries or permissions above are non-free.
+Byte-for-byte matching to an upstream APK is needed if opting into upstream
+binary verification, not a prerequisite for ordinary F-Droid-built/signed APKs.
 
 ### Release and external submission
 
-1. Finish the licensing checks, add real screenshots below, and verify the
-   release build. These are still outstanding; metadata alone is not approval.
+1. Verify the release build and F-Droid scanner checks, and add real screenshots
+   below for the listing. Metadata alone is not F-Droid approval.
 2. Publish a **new** release after these changes are merged. The existing
    `0.0.1` tag predates this preparation and will not expose this metadata.
    Increment `versionCode` and `versionName` together, add the matching
