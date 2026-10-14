@@ -709,6 +709,7 @@ class BleSessionViewModel(application: Application) : AndroidViewModel(applicati
     private fun carryForwardSettingsFields(data: EUCData): EUCData {
         val previous = _sessionState.value.lastData ?: return data
         if (previous.manufacturer != data.manufacturer) return data
+        val kingsong = wheel_type_from_string(data.manufacturer) == Constants.WHEEL_TYPE.KINGSONG
 
         return data.copy(
             pedalsMode = data.pedalsMode ?: previous.pedalsMode,
@@ -717,12 +718,12 @@ class BleSessionViewModel(application: Application) : AndroidViewModel(applicati
             usesMiles = data.usesMiles ?: previous.usesMiles,
             autoPowerOffMinutes = data.autoPowerOffMinutes ?: previous.autoPowerOffMinutes,
             tiltBackSpeed = data.tiltBackSpeed ?: previous.tiltBackSpeed,
-            speedLimit = data.speedLimit ?: previous.speedLimit,
-            dynamicSpeedLimit = data.dynamicSpeedLimit ?: previous.dynamicSpeedLimit,
-            wheelMaxSpeed = data.wheelMaxSpeed ?: previous.wheelMaxSpeed,
-            alarm1Speed = data.alarm1Speed ?: previous.alarm1Speed,
-            alarm2Speed = data.alarm2Speed ?: previous.alarm2Speed,
-            alarm3Speed = data.alarm3Speed ?: previous.alarm3Speed,
+            speedLimit = data.speedLimit ?: previous.speedLimit.takeIf { kingsong },
+            dynamicSpeedLimit = data.dynamicSpeedLimit ?: previous.dynamicSpeedLimit.takeIf { kingsong },
+            wheelMaxSpeed = data.wheelMaxSpeed ?: previous.wheelMaxSpeed.takeIf { kingsong },
+            alarm1Speed = data.alarm1Speed ?: previous.alarm1Speed.takeIf { kingsong },
+            alarm2Speed = data.alarm2Speed ?: previous.alarm2Speed.takeIf { kingsong },
+            alarm3Speed = data.alarm3Speed ?: previous.alarm3Speed.takeIf { kingsong },
             ledMode = data.ledMode ?: previous.ledMode,
             lightMode = data.lightMode ?: previous.lightMode,
             alertFlags = data.alertFlags ?: previous.alertFlags,

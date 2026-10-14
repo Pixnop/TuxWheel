@@ -300,7 +300,7 @@ private fun speedLimitSetting(appConfig: AppConfig, viewModel: BleSessionViewMod
     if (!viewModel.isCommandSupported(CommandType.SET_SPEED_LIMIT)) return
     val state by viewModel.sessionState.collectAsState()
     val kingsong = viewModel.wheelType == Constants.WHEEL_TYPE.KINGSONG
-    val reportedLimit = state.wheelMaxSpeed ?: state.speedLimit?.toInt()
+    val reportedLimit = if (kingsong) state.wheelMaxSpeed ?: state.speedLimit?.toInt() else null
     if (kingsong && (reportedLimit == null || state.alarm1Speed == null ||
         state.alarm2Speed == null || state.alarm3Speed == null)) return
 
@@ -352,7 +352,7 @@ private fun alarmSpeedSetting(appConfig: AppConfig, viewModel: BleSessionViewMod
     sliderPref(
         name = stringResource(R.string.wheel_alarm1_title),
         desc = stringResource(R.string.wheel_alarm1_description),
-        position = (state.alarm1Speed ?: appConfig.wheelAlarm1Speed).toFloat(),
+        position = appConfig.wheelAlarm1Speed.toFloat(),
         min = 0f,
         max = 100f,
         unit = R.string.kmh,

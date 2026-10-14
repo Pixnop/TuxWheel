@@ -258,7 +258,7 @@ class MainActivity : AppCompatActivity() {
             protocolSelectionDialog = null
         }
 
-        if (state.passwordPromptRequired && wheelPasswordDialog == null) {
+        if (state.passwordPromptRequired && wheelPasswordDialog == null && !isPaused) {
             showWheelPasswordDialog(state.passwordPromptError)
         } else if (!state.passwordPromptRequired) {
             wheelPasswordDialog?.dismiss()
@@ -385,8 +385,6 @@ class MainActivity : AppCompatActivity() {
                 Timber.i("User manually selected protocol: %s", selectedId)
                 viewModel.selectProtocol(selectedId)
                 protocolSelectionDialog = null
-                wheelPasswordDialog?.dismiss()
-                wheelPasswordDialog = null
             }
             .setNegativeButton(R.string.protocol_cancel) { _, _ ->
                 viewModel.dismissProtocolSelection()
@@ -598,6 +596,10 @@ class MainActivity : AppCompatActivity() {
     public override fun onResume() {
         super.onResume()
         isPaused = false
+        val state = viewModel.sessionState.value
+        if (state.passwordPromptRequired && wheelPasswordDialog == null) {
+            showWheelPasswordDialog(state.passwordPromptError)
+        }
         if (checkNotificationsPermissions(this)) {
             notifications.update()
         }
@@ -617,6 +619,8 @@ class MainActivity : AppCompatActivity() {
         isPaused = true
         protocolSelectionDialog?.dismiss()
         protocolSelectionDialog = null
+        wheelPasswordDialog?.dismiss()
+        wheelPasswordDialog = null
     }
 
     override fun onStart() {
