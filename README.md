@@ -205,6 +205,9 @@ JitPack (MPAndroidChart). Local Maven artifacts are intentionally not used:
 a clean checkout must resolve the published BLE dependency remotely.
 Do not downgrade the pinned library or plugins to bypass resolution failures.
 
+Pull requests and pushes to `main` run the debug unit tests and Android lint on
+a hosted Linux runner. These checks need no emulator or release-signing secrets.
+
 During F-Droid preparation, the local build stopped before compilation because
 **AGP 9.2.1** could not be resolved. Build, unit-test and lint results for these
 changes therefore remain unverified; the existing `0.0.1` GitHub release build
