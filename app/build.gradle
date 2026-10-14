@@ -1,10 +1,12 @@
-
+import com.github.jk1.license.filter.LicenseBundleNormalizer
+import com.github.jk1.license.render.InventoryMarkdownReportRenderer
 
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.ksp)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.license.report)
 }
 
 android {
@@ -91,6 +93,8 @@ dependencies {
     implementation libs.compose.material3
     implementation libs.compose.navigation
     implementation libs.compose.material.icons
+    implementation libs.richtext.material3
+    implementation libs.richtext.commonmark
 
     // Lifecycle / ViewModel
     implementation libs.lifecycle.viewmodel.ktx
@@ -139,4 +143,25 @@ dependencies {
     testImplementation libs.json
     testImplementation libs.koin.test
     testImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:1.11.0"
+}
+
+licenseReport {
+    outputDir = layout.buildDirectory.dir('reports/dependency-licenses').get().asFile.path
+    configurations = ['releaseRuntimeClasspath', 'debugRuntimeClasspath']
+    renderers = [new InventoryMarkdownReportRenderer(
+        'third_party_licenses.md', 'TuxWheel', null, false
+    )]
+    filters = [new LicenseBundleNormalizer()]
+}
+
+def generatedLicenseAssets = layout.buildDirectory.dir('generated/licenseAssets')
+def copyLicenseReportToAssets = tasks.register('copyLicenseReportToAssets', Sync) {
+    dependsOn tasks.named('generateLicenseReport')
+    from layout.buildDirectory.dir('reports/dependency-licenses')
+    into generatedLicenseAssets.map { it.dir('licenses') }
+}
+
+android.sourceSets.main.assets.srcDir(generatedLicenseAssets)
+tasks.named('preBuild') {
+    dependsOn copyLicenseReportToAssets
 }

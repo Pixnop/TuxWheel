@@ -149,15 +149,19 @@ Open **Settings → About TuxWheel → Third-party software and licenses** to
 read the bundled dependency list and existing asset/license notices offline.
 The viewer includes the GPL-3.0 and Source Sans Pro OFL texts.
 
-The [dependency inventory](app/src/main/assets/licenses/third_party_dependencies.txt)
-lists direct app dependencies, their declared versions, upstream sources and
-licenses; debug-only tooling is identified separately. It is not a complete
-resolved transitive dependency report. Build plugins, annotation processors
-and test-only libraries are outside its scope.
+The dependency license report is generated automatically by
+`com.github.jk1.dependency-license-report` from the resolved release and debug
+runtime classpaths, including transitive dependencies. Build plugins, annotation
+processors and test-only libraries are outside its scope. Compose RichText
+renders the bundled Markdown with Material 3 styling.
 
-When changing `app/build.gradle` or `gradle/libs.versions.toml`, update this
-inventory too. Preserve the notices under `app/src/main/assets/licenses/`
-and review the resolved release dependency graph before distributing a release.
+Run `./gradlew :app:copyLicenseReportToAssets` to regenerate the report without
+building an APK; normal builds also run it automatically. The report and extracted
+license files are bundled from `app/build/generated/licenseAssets/licenses/`,
+not written into the source tree. Preserve the notices under
+`app/src/main/assets/licenses/` and review the resolved release dependency graph
+before distributing a release: published license metadata can be incorrect
+(see the bundled EUC BLE notice).
 
 ## Development
 
