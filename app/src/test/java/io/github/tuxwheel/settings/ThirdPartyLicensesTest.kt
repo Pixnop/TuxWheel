@@ -46,6 +46,23 @@ class ThirdPartyLicensesTest {
         }
     }
 
+    @Test fun `embedded license links resolve only inside the bundled license directory`() {
+        assertThat(licenseAssetPath("some-library/LICENSE.txt"))
+            .isEqualTo("licenses/some-library/LICENSE.txt")
+        assertThat(licenseAssetPath("some-library/License%20notice.txt"))
+            .isEqualTo("licenses/some-library/License notice.txt")
+        listOf(
+            "https://example.com/LICENSE",
+            "file:///etc/passwd",
+            "//example.com/LICENSE",
+            "/LICENSE",
+            "../NOTICE.txt",
+            "%2e%2e/NOTICE.txt",
+            "some-library/../../NOTICE.txt",
+            "",
+        ).forEach { url -> assertThat(licenseAssetPath(url)).isNull() }
+    }
+
     private fun readAsset(name: String): String =
         application.assets.open("licenses/$name").bufferedReader().use { it.readText() }
 }

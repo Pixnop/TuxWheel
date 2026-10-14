@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="third_party_licenses_title">Logiciels tiers et licences</string>
+    <string name="third_party_license_read_error">Impossible d’ouvrir cette licence.</string>
     <string name="trip_delete_failed">Impossible de supprimer le fichier du trajet.</string>
     <string name="trip_load_failed">Impossible de charger les trajets.</string>
     <string name="trip_share_failed">Impossible de partager le fichier du trajet.</string>
