@@ -9,6 +9,7 @@ import io.github.tritbool.euc.ble.EucBleClient
 import io.github.tritbool.euc.ble.models.AuthenticationState
 import io.github.tritbool.euc.ble.models.WheelSecurityEvent
 import io.github.tritbool.euc.ble.models.WheelSecurityState
+import io.github.tritbool.euc.ble.models.WheelLockState
 import io.github.tritbool.euc.ble.protocols.CommandSupport
 import io.github.tritbool.euc.ble.protocols.CommandType
 import io.mockk.every
@@ -53,6 +54,17 @@ class WheelPasswordTest {
         model.updateWheelSecurity(null)
         model.updateWheelSecurity(WheelSecurityState())
         assertThat(model.sessionState.value.passwordPromptRequired).isTrue()
+    }
+
+    @Test fun `wheel lock state follows wheel notifications and resets when unavailable`() {
+        model.updateWheelSecurity(WheelSecurityState(lock = WheelLockState.LOCKED))
+        assertThat(model.sessionState.value.wheelLockState).isEqualTo(WheelLockState.LOCKED)
+
+        model.updateWheelSecurity(WheelSecurityState(lock = WheelLockState.UNLOCKED))
+        assertThat(model.sessionState.value.wheelLockState).isEqualTo(WheelLockState.UNLOCKED)
+
+        model.updateWheelSecurity(null)
+        assertThat(model.sessionState.value.wheelLockState).isEqualTo(WheelLockState.UNKNOWN)
     }
 
     @Test fun `validate ASCII digits and preserve leading zeros without sending unlock`() {

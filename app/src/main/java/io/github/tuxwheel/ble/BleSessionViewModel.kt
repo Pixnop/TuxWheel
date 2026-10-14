@@ -31,6 +31,7 @@ import io.github.tritbool.euc.ble.models.EUCDevice
 import io.github.tritbool.euc.ble.models.AuthenticationState
 import io.github.tritbool.euc.ble.models.WheelSecurityEvent
 import io.github.tritbool.euc.ble.models.WheelSecurityState
+import io.github.tritbool.euc.ble.models.WheelLockState
 import io.github.tritbool.euc.ble.protocols.CommandSupport
 import io.github.tritbool.euc.ble.protocols.CommandType
 import io.github.tritbool.euc.ble.protocols.EUCProtocol
@@ -215,6 +216,9 @@ class BleSessionViewModel(application: Application) : AndroidViewModel(applicati
     private var passwordResponseJob: Job? = null
 
     internal fun updateWheelSecurity(security: WheelSecurityState?) {
+        _sessionState.update {
+            it.copy(wheelLockState = security?.lock ?: WheelLockState.UNKNOWN)
+        }
         if (security == null) {
             resetPasswordPrompt()
         } else if (!passwordPromptOffered) {
