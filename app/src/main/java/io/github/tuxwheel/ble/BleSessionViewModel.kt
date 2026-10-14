@@ -31,6 +31,7 @@ import io.github.tritbool.euc.ble.models.EUCDevice
 import io.github.tritbool.euc.ble.models.AuthenticationState
 import io.github.tritbool.euc.ble.models.WheelSecurityEvent
 import io.github.tritbool.euc.ble.models.WheelSecurityState
+import io.github.tritbool.euc.ble.models.WheelLockState
 import io.github.tritbool.euc.ble.protocols.CommandSupport
 import io.github.tritbool.euc.ble.protocols.CommandType
 import io.github.tritbool.euc.ble.protocols.EUCProtocol
@@ -215,6 +216,9 @@ class BleSessionViewModel(application: Application) : AndroidViewModel(applicati
     private var passwordResponseJob: Job? = null
 
     internal fun updateWheelSecurity(security: WheelSecurityState?) {
+        _sessionState.update {
+            it.copy(wheelLockState = security?.lock ?: WheelLockState.UNKNOWN)
+        }
         if (security == null) {
             resetPasswordPrompt()
         } else if (!passwordPromptOffered) {
@@ -424,7 +428,8 @@ class BleSessionViewModel(application: Application) : AndroidViewModel(applicati
             lastData = null,
             lastDataTimestamp = null,
             lastError = null,
-            isScanning = false
+            isScanning = false,
+            wheelLockState = WheelLockState.UNKNOWN
         )
         _bmsDisplay.value = captureBmsDisplay()
 
@@ -453,7 +458,8 @@ class BleSessionViewModel(application: Application) : AndroidViewModel(applicati
             // keep treating the last received sample as fresh.
             lastDataTimestamp = null,
             protocolSelectionRequired = false,
-            protocolCandidates = emptyList()
+            protocolCandidates = emptyList(),
+            wheelLockState = WheelLockState.UNKNOWN
         )
         _bmsDisplay.value = captureBmsDisplay()
 
@@ -1084,6 +1090,31 @@ class BleSessionViewModel(application: Application) : AndroidViewModel(applicati
     @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
     fun sendCommand(commandType: CommandType, value: Any = Unit) {
         _eucBleClient.sendCommand(commandType, value)
+    }
+
+    @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
+    fun setWheelLocked(locked: Boolean) {
+        val command = if (locked) CommandType.LOCK else CommandType.UNLOCK
+        if (!isCommandSupported(command)) return
+
+        sendCommand(command)
+        requestWheelLockState()
+    }
+
+    @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
+    fun toggleWheelLock() {
+        when (_sessionState.value.wheelLockState) {
+            WheelLockState.LOCKED -> setWheelLocked(false)
+            WheelLockState.UNLOCKED -> setWheelLocked(true)
+            WheelLockState.UNKNOWN -> requestWheelLockState()
+        }
+    }
+
+    @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
+    fun requestWheelLockState() {
+        if (isCommandSupported(CommandType.REQUEST_LOCK_STATE)) {
+            sendCommand(CommandType.REQUEST_LOCK_STATE)
+        }
     }
 
     fun isCommandSupported(commandType: CommandType): Boolean {

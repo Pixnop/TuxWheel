@@ -4,6 +4,7 @@ import io.github.tuxwheel.utils.Constants.wheel_type_from_string
 import io.github.tritbool.euc.ble.core.BLEConstants
 import io.github.tritbool.euc.ble.models.EUCData
 import io.github.tritbool.euc.ble.models.EUCDevice
+import io.github.tritbool.euc.ble.models.WheelLockState
 import io.github.tritbool.euc.ble.protocols.EUCProtocol
 
 /**
@@ -51,7 +52,8 @@ data class BleSessionState(
     val protocolSelectionRequired: Boolean = false,
     val protocolCandidates: List<EUCProtocol> = emptyList(),
     val passwordPromptRequired: Boolean = false,
-    val passwordPromptError: Boolean = false
+    val passwordPromptError: Boolean = false,
+    val wheelLockState: WheelLockState = WheelLockState.UNKNOWN
 ) {
     // Helper properties for UI binding
     val isConnected: Boolean

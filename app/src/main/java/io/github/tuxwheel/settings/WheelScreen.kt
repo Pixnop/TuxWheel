@@ -18,6 +18,7 @@ import io.github.tuxwheel.R
 import io.github.tuxwheel.ble.BleSessionViewModel
 import io.github.tuxwheel.utils.Constants
 import io.github.tritbool.euc.ble.protocols.CommandType
+import io.github.tritbool.euc.ble.models.WheelLockState
 import org.koin.compose.koinInject
 
 @Composable
@@ -151,17 +152,84 @@ private fun connectBeepSetting(appConfig: AppConfig, viewModel: BleSessionViewMo
 @Composable
 @androidx.annotation.RequiresPermission(android.Manifest.permission.BLUETOOTH_CONNECT)
 private fun lockSetting(appConfig: AppConfig, viewModel: BleSessionViewModel) {
-    val supportsLock = viewModel.isCommandSupported(CommandType.LOCK) ||
-            viewModel.isCommandSupported(CommandType.UNLOCK)
-    if (!supportsLock) return
+    val supportsLock = viewModel.isCommandSupported(CommandType.LOCK)
+    val supportsUnlock = viewModel.isCommandSupported(CommandType.UNLOCK)
+    if (!supportsLock && !supportsUnlock) return
 
-    switchPref(
-        name = stringResource(R.string.lock_mode_title),
-        desc = stringResource(R.string.lock_mode_description),
-        default = appConfig.wheelLocked,
-    ) { locked ->
-        appConfig.wheelLocked = locked
-        viewModel.sendCommand(if (locked) CommandType.LOCK else CommandType.UNLOCK)
+    val state by viewModel.sessionState.collectAsState()
+    val isLockStateSupported = viewModel.isCommandSupported(CommandType.REQUEST_LOCK_STATE)
+    val checkedState = remember { mutableStateOf(appConfig.wheelLocked) }
+    androidx.compose.runtime.LaunchedEffect(
+        state.selectedDevice?.address,
+        state.isConnected,
+        state.lastDataTimestamp != null,
+        isLockStateSupported,
+    ) {
+        if (state.isConnected && state.lastDataTimestamp != null && isLockStateSupported) {
+            viewModel.requestWheelLockState()
+        }
+    }
+    androidx.compose.runtime.LaunchedEffect(state.wheelLockState) {
+        when (state.wheelLockState) {
+            WheelLockState.LOCKED -> {
+                checkedState.value = true
+                appConfig.wheelLocked = true
+            }
+            WheelLockState.UNLOCKED -> {
+                checkedState.value = false
+                appConfig.wheelLocked = false
+            }
+            WheelLockState.UNKNOWN -> Unit
+        }
+    }
+    val canChangeLock = {
+        val latest = viewModel.sessionState.value
+        latest.isConnected &&
+                latest.lastDataTimestamp?.let { System.currentTimeMillis() - it < 5_000L } == true &&
+                viewModel.speed < 1
+    }
+    if (supportsLock && supportsUnlock) {
+        switchPref(
+            name = stringResource(R.string.lock_mode_title),
+            desc = stringResource(R.string.lock_mode_description),
+            defaultState = checkedState,
+            enabled = canChangeLock() && (!isLockStateSupported || state.wheelLockState != WheelLockState.UNKNOWN),
+        ) { checked ->
+            checkedState.value = state.wheelLockState == WheelLockState.LOCKED
+            if (canChangeLock()) {
+                if (isLockStateSupported) {
+                    viewModel.toggleWheelLock()
+                } else {
+                    viewModel.setWheelLocked(checked)
+                }
+            }
+        }
+    } else {
+        val lockStatus = when (state.wheelLockState) {
+            WheelLockState.LOCKED -> stringResource(R.string.wheel_lock_status_locked)
+            WheelLockState.UNLOCKED -> stringResource(R.string.wheel_lock_status_unlocked)
+            WheelLockState.UNKNOWN -> stringResource(R.string.wheel_lock_status_unknown)
+        }
+        baseSettings(
+            name = stringResource(R.string.wheel_lock_status_title),
+            rightContent = { Text(lockStatus) },
+        )
+        if (supportsLock) {
+            clickableAndAlert(
+                name = stringResource(R.string.lock_wheel),
+                alertDesc = stringResource(R.string.lock_wheel_confirmation),
+                condition = canChangeLock,
+                onConfirm = { if (canChangeLock()) viewModel.setWheelLocked(true) },
+            )
+        }
+        if (supportsUnlock) {
+            clickableAndAlert(
+                name = stringResource(R.string.unlock_wheel),
+                alertDesc = stringResource(R.string.unlock_wheel_confirmation),
+                condition = canChangeLock,
+                onConfirm = { if (canChangeLock()) viewModel.setWheelLocked(false) },
+            )
+        }
     }
 }
 

@@ -538,6 +538,14 @@
     <string name="transport_mode_description">This mode prevents wheel from starting motor during transportation</string>
     <string name="lock_mode_title">Lock mode</string>
     <string name="lock_mode_description">Lock the wheel</string>
+    <string name="wheel_lock_status_title">Wheel lock status</string>
+    <string name="wheel_lock_status_locked">Locked</string>
+    <string name="wheel_lock_status_unlocked">Unlocked</string>
+    <string name="wheel_lock_status_unknown">Unknown</string>
+    <string name="lock_wheel">Lock wheel</string>
+    <string name="lock_wheel_confirmation">Locking disables the wheel. Only continue while the wheel is stationary.</string>
+    <string name="unlock_wheel">Unlock wheel</string>
+    <string name="unlock_wheel_confirmation">Unlocking reactivates the wheel. Only continue while the wheel is stationary.</string>
     <string name="berm_angle_mode_title">Angle cut-out increase</string>
     <string name="berm_angle_mode_description">Can lead to uncontrollable behavior when fall down, take into account this risk!</string>
     <string name="standby_delay_title">Standby</string>
