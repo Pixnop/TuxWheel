@@ -162,10 +162,9 @@ private fun lockSetting(appConfig: AppConfig, viewModel: BleSessionViewModel) {
     androidx.compose.runtime.LaunchedEffect(
         state.selectedDevice?.address,
         state.isConnected,
-        state.lastDataTimestamp != null,
         isLockStateSupported,
     ) {
-        if (state.isConnected && state.lastDataTimestamp != null && isLockStateSupported) {
+        if (state.isConnected && isLockStateSupported) {
             viewModel.requestWheelLockState()
         }
     }
@@ -182,26 +181,25 @@ private fun lockSetting(appConfig: AppConfig, viewModel: BleSessionViewModel) {
             WheelLockState.UNKNOWN -> Unit
         }
     }
-    val canChangeLock = {
-        val latest = viewModel.sessionState.value
-        latest.isConnected &&
-                latest.lastDataTimestamp?.let { System.currentTimeMillis() - it < 5_000L } == true &&
-                viewModel.speed < 1
+    val canChangeLock = { locked: Boolean ->
+        canSetWheelLocked(viewModel.sessionState.value, locked)
     }
     if (supportsLock && supportsUnlock) {
         switchPref(
             name = stringResource(R.string.lock_mode_title),
             desc = stringResource(R.string.lock_mode_description),
             defaultState = checkedState,
-            enabled = canChangeLock() && (!isLockStateSupported || state.wheelLockState != WheelLockState.UNKNOWN),
+            enabled = canChangeLock(!checkedState.value) &&
+                    (!isLockStateSupported || state.wheelLockState != WheelLockState.UNKNOWN),
         ) { checked ->
-            checkedState.value = state.wheelLockState == WheelLockState.LOCKED
-            if (canChangeLock()) {
-                if (isLockStateSupported) {
-                    viewModel.toggleWheelLock()
-                } else {
-                    viewModel.setWheelLocked(checked)
-                }
+            if (isLockStateSupported) {
+                checkedState.value = state.wheelLockState == WheelLockState.LOCKED
+            }
+            if (canChangeLock(checked)) {
+                viewModel.setWheelLocked(checked)
+                if (!isLockStateSupported) appConfig.wheelLocked = checked
+            } else if (!isLockStateSupported) {
+                checkedState.value = !checked
             }
         }
     } else {
@@ -218,16 +216,16 @@ private fun lockSetting(appConfig: AppConfig, viewModel: BleSessionViewModel) {
             clickableAndAlert(
                 name = stringResource(R.string.lock_wheel),
                 alertDesc = stringResource(R.string.lock_wheel_confirmation),
-                condition = canChangeLock,
-                onConfirm = { if (canChangeLock()) viewModel.setWheelLocked(true) },
+                condition = { canChangeLock(true) },
+                onConfirm = { if (canChangeLock(true)) viewModel.setWheelLocked(true) },
             )
         }
         if (supportsUnlock) {
             clickableAndAlert(
                 name = stringResource(R.string.unlock_wheel),
                 alertDesc = stringResource(R.string.unlock_wheel_confirmation),
-                condition = canChangeLock,
-                onConfirm = { if (canChangeLock()) viewModel.setWheelLocked(false) },
+                condition = { canChangeLock(false) },
+                onConfirm = { if (canChangeLock(false)) viewModel.setWheelLocked(false) },
             )
         }
     }
