@@ -496,8 +496,6 @@
     <string name="wheel_calibration_message_inmo">Please set wheel in parking position before start, continue?</string>
     <string name="wheel_calibration_balance_message_inmo">If normal calibration is not fixing issues, try this one, continue?</string>
     <string name="wheel_calibration_message_nb">Please set wheel in center position before start, EUC will be locked, continue?</string>
-    <string name="private_policy_title">Private policy</string>
-    <string name="private_policy_agree">I read and agree</string>
     <string name="current_mac">MAC address</string>
     <string name="share">Share</string>
     <string name="show_page_trips_title">Trips page</string>
@@ -563,7 +561,6 @@
     <string name="use_reconnect_title">Use reconnect</string>
     <string name="use_reconnect_description">Autoreconnect to wheel if data freeze (use only if you have problems)</string>
     <string name="use_raw_description">When enabled, all raw Bluetooth data packets from the wheel are logged to a separate CSV file. Logging begins when connected and first packet is received. The log file remains open while this setting is enabled, automatically continuing to log data across any disconnections and reconnections. Toggle this setting off to close the current log file. Files are saved to Downloads/TuxWheel/[MAC_ADDRESS]/RAW_yyyy_MM_dd_HH_mm_ss.csv</string>
-    <string name="private_policy"><![CDATA[Before using the app, you must accept the <a href=\"https://github.com/Wheellog/Wheellog.Android/wiki/Privacy-Policy\">Private policy</a> and <a href=\"https://github.com/Wheellog/Wheellog.Android/wiki/Terms-&-Conditions\">Terms & Conditions</a>]]></string>
     <string name="replace_info_block">Replace \"%s\" to:</string>
     <string name="auto_log_when_moving_description">Start auto logging only when wheel speed more than</string>
     <string name="auto_log_when_moving_title">Start logging when is moving</string>
@@ -598,7 +595,6 @@
     <string name="create_test_log">Create new test log</string>
     <string name="permisson_error">Permission error</string>
     <string name="icon_miband">Mi Band</string>
-    <string name="start_pebble_service">Watch</string>
     <string name="miband_desc">Mi Band</string>
     <string name="disable_phone_vibration_description">Disable phone vibration for alarms</string>
     <string name="disable_phone_beep_description">Disable phone beep for alarms</string>

@@ -36,8 +36,6 @@ enum class ThemeIconEnum {
     SettingsConnectionSound,
     SettingsAutoMute,
     TripsPopupButton,
-    TripsUpload,
     TripsShare,
     TripsDelete,
-    TripsOpenEc,
 }

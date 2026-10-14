@@ -278,9 +278,6 @@
     <string name="about_app_desc">TuxWheel — бесплатное приложение с открытым исходным кодом для электрических моноколёс. Для связи по Bluetooth используется EUC_BLE_LIBRARY.</string>
     <string name="power_off">Выключить колесо</string>
     <string name="power_off_message">Колесо будет выключено. Вы уверены?</string>
-    <string name="private_policy_title">Политика конфиденциальности</string>
-    <string name="private_policy"><![CDATA[Перед использованием приложения вы должны принять <a href=\"https://github.com/Wheellog/Wheellog.Android/wiki/Privacy-Policy\">Политику конфиденциальности</a> и <a href=\"https://github.com/Wheellog/Wheellog.Android/wiki/Terms-&-Conditions\">Условия и положения</a>]]></string>
-    <string name="private_policy_agree">Я прочитал и согласен</string>
     <string name="current_mac">MAC адрес</string>
     <string name="ride_mode_title">Режим педалей</string>
     <string name="ride_mode_description">Вкл - Классик/Оффроад, Выкл - Комфорт/Онроад</string>

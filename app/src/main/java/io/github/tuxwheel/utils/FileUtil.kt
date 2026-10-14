@@ -11,7 +11,6 @@ import android.os.Environment
 import android.provider.MediaStore
 import androidx.core.content.FileProvider
 import io.github.tuxwheel.views.TripModel
-import com.google.common.io.ByteStreams
 import timber.log.Timber
 import java.io.*
 import java.text.SimpleDateFormat
@@ -147,7 +146,7 @@ class FileUtil(val context: Context) {
         } else if (file != null) {
             inputStream = FileInputStream(file)
         }
-        return inputStream?.let { ByteStreams.toByteArray(it) }
+        return inputStream?.use { it.readBytes() }
     }
 
     fun close() {

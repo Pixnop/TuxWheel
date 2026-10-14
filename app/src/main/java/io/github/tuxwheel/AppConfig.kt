@@ -239,10 +239,6 @@ class AppConfig(var context: Context) : KoinComponent {
         get() = getValue(R.string.use_detect_battery_optimization, true)
         set(value) = setValue(R.string.use_detect_battery_optimization, value)
 
-    var privatePolicyAccepted: Boolean
-        get() = getValue(R.string.private_policy_accepted, false)
-        set(value) = setValue(R.string.private_policy_accepted, value)
-
     //endregion
 
     //region logs

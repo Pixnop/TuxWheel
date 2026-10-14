@@ -68,11 +68,9 @@ android {
         }
     }
     packagingOptions {
-        jniLibs {
-            excludes += ['META-INF/LICENSE*', 'META-INF/NOTICE*']
-        }
         resources {
-            excludes += ['META-INF/DEPENDENCIES', 'META-INF/LICENSE*', 'META-INF/NOTICE*', 'META-INF/ASL2.0', 'META-INF/*.kotlin_module']
+            excludes += ['META-INF/DEPENDENCIES', 'META-INF/*.kotlin_module']
+            merges += ['META-INF/LICENSE*', 'META-INF/NOTICE*', 'META-INF/ASL2.0']
         }
     }
     lint {
@@ -88,7 +86,8 @@ dependencies {
     implementation libs.compose.foundation
     implementation libs.compose.runtime
     implementation libs.compose.ui
-    implementation libs.compose.ui.tooling
+    implementation libs.compose.ui.tooling.preview
+    debugImplementation libs.compose.ui.tooling
     implementation libs.compose.material3
     implementation libs.compose.navigation
     implementation libs.compose.material.icons
@@ -112,7 +111,6 @@ dependencies {
     implementation libs.material
     implementation libs.preference.ktx
     implementation libs.constraintlayout
-    implementation libs.legacy.support.v4
 
     // Kotlin
     implementation libs.kotlin.stdlib
@@ -127,7 +125,6 @@ dependencies {
     // UI
     implementation libs.timber
     implementation libs.mpandroidchart
-    implementation libs.guava
 
     // Test
     testImplementation libs.junit

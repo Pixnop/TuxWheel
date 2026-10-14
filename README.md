@@ -21,6 +21,20 @@ telemetry, configure supported wheel settings, and record rides.
 - NO ads
 - NO data collection
 
+The merged app manifest removes Internet permission, including declarations
+from libraries. Source/help links open in your chosen browser; sharing opens
+your chosen app, neither of which needs network access inside TuxWheel.
+Automatic Android cloud backup and device-transfer extraction of app data are
+disabled. This does not delete existing backups or protect public Downloads
+files from other apps, device-owner tools, or a user's own backup software.
+Export any data you need before uninstalling: settings will not restore
+automatically.
+
+Debug builds log to logcat, not automatically to public HTML files. Ride CSV
+logging and optional raw BLE diagnostics remain explicit app features; they can
+contain identifying data and should be disabled when not needed. Existing files
+are not deleted by this cleanup.
+
 ## Requirements and wheel support
 
 - Android 6.0 or newer (API 23), with BLE hardware and Bluetooth enabled.
@@ -188,6 +202,9 @@ within 4,000, and release notes within 500. Add
   source. The Gradle wrapper JAR is build tooling, not an app dependency.
 - Review the complete release dependency graph and retain required license
   notices. The GPL-3.0 project license does not replace third-party licenses.
+  Packaging now merges bundled `META-INF/LICENSE*`, `META-INF/NOTICE*` and
+  `META-INF/ASL2.0` resources instead of discarding them; inspect the release APK
+  and complete the dependency inventory as part of the license review.
   Include the pinned EUC BLE library's source/license and MPAndroidChart's
   Apache-2.0 source at tag `v3.1.0` in that review. JitPack remains necessary
   for MPAndroidChart; disclose it to F-Droid reviewers rather than adding
@@ -198,6 +215,38 @@ within 4,000, and release notes within 500. Add
   notice. Establish the provenance/license of `prime_regular.otf` (internally
   named Wheellog) and the app icon before claiming the asset audit is complete.
   No generated third-party license inventory is currently provided.
+
+### Cleanup audit: retained components and remaining work
+
+The cleanup removed the old mandatory consent to **WheelLog's** privacy policy
+and terms (not TuxWheel's), its dialog/preferences/resources, automatic public
+debug HTML logging, an unused custom permission, the direct Guava dependency,
+the unused wake-lock permission, dead upload/open-in-external-app icons and
+analytics/watch preference remnants, and the unused AndroidX legacy-support
+umbrella dependency. File reads use the
+Kotlin standard library and close their streams. Compose inspection tooling is
+debug-only; lightweight preview annotations remain available when compiling
+release sources. These AndroidX/Guava/tooling libraries are FOSS, not trackers:
+their removal/re-scoping is an efficiency improvement, not an F-Droid ban.
+No analytics SDK, account service, GPS recorder or automatic uploader was found
+in the app's runtime source. The unresolved build prevents a complete
+transitive-dependency/merged-release-APK audit.
+
+Do **not** simply delete these remaining components:
+
+| Component | Why retained / what removal would require |
+| --- | --- |
+| `prime_regular.otf`, `ajdm.otf` and theme artwork | The dashboard, PiP, lists, clock and notification layouts reference the fonts; deleting them would break resource compilation or rendering. Establish provenance and preserve the required font licenses/notices, or replace fonts with system fonts across View/Compose/Canvas and verify both themes. Artwork/icon licensing also needs confirmation; unknown provenance is not proof of a proprietary license. |
+| EUC_BLE_LIBRARY | Required for scanning, connection, telemetry and commands. Verify the published version's source/license and transitives. Removal needs a replacement BLE/protocol implementation. |
+| MPAndroidChart / JitPack | The chart page still embeds MPAndroidChart. It is Apache-2.0, not known to be F-Droid-incompatible merely because it uses JitPack. Removing it requires migrating the chart renderer or deliberately removing the chart feature; review source/build provenance with the packager. |
+| Location permission on Android 6–11 | Required for legacy BLE discovery, not GPS logging. Removing it prevents scanning on those devices; Android 12+ uses Nearby devices permissions instead. |
+| Legacy storage permissions and public CSV logs | Used for existing CSV logging/trips, especially on older Android. Removing these requires a private-storage/explicit import-export migration and compatibility testing, not simply deleting permissions. User-controlled sharing and raw BLE logs can expose wheel identifiers; sanitize exports. |
+| Foreground service, notifications and battery-optimization exemption option | Support background ride logging and its controls. Removal requires redesign/testing of background recording and may stop logs with the screen off. |
+
+There is no claim that all dependencies/assets are already F-Droid-approved.
+The license/provenance audit, a successful clean release build, F-Droid's scanner
+and real-device testing are still required. Optional chart removal or storage/font
+migration should be separate changes rather than silent feature regressions.
 
 ### Release and external submission
 
