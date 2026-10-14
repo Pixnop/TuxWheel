@@ -81,8 +81,12 @@ fun startScreen(
             }
         }
         var showAboutDialog by remember { mutableStateOf(false) }
+        var showLicensesDialog by remember { mutableStateOf(false) }
 
-        if (showAboutDialog) {
+        if (showLicensesDialog) {
+            ThirdPartyLicensesDialog(onDismissRequest = { showLicensesDialog = false })
+        }
+        if (showAboutDialog && !showLicensesDialog) {
             AlertDialog(
                 shape = RoundedCornerShape(8.dp),
                 onDismissRequest = { showAboutDialog = false },
@@ -93,7 +97,7 @@ fun startScreen(
                     )
                 },
                 text = {
-                    Column {
+                    Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
                         Text(
                             text = "Version ${BuildConfig.VERSION_NAME}",
                             style = MaterialTheme.typography.bodyMedium,
@@ -128,6 +132,11 @@ fun startScreen(
                                     "https://github.com/Tritbool/TuxWheel/issues".toUri()
                                 ),
                             )
+                        }
+                        clickablePref(
+                            name = stringResource(R.string.third_party_licenses_title),
+                        ) {
+                            showLicensesDialog = true
                         }
                         Text(
                             text = stringResource(R.string.about_app_desc),
