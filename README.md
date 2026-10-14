@@ -222,8 +222,7 @@ The cleanup removed the old mandatory consent to **WheelLog's** privacy policy
 and terms (not TuxWheel's), its dialog/preferences/resources, automatic public
 debug HTML logging, an unused custom permission, the direct Guava dependency,
 the unused wake-lock permission, dead upload/open-in-external-app icons and
-analytics/watch preference remnants, and the unused AndroidX legacy-support
-umbrella dependency. File reads use the
+analytics/watch preference remnants. File reads use the
 Kotlin standard library and close their streams. Compose inspection tooling is
 debug-only; lightweight preview annotations remain available when compiling
 release sources. These AndroidX/Guava/tooling libraries are FOSS, not trackers:
@@ -239,6 +238,7 @@ Do **not** simply delete these remaining components:
 | `prime_regular.otf`, `ajdm.otf` and theme artwork | The dashboard, PiP, lists, clock and notification layouts reference the fonts; deleting them would break resource compilation or rendering. Establish provenance and preserve the required font licenses/notices, or replace fonts with system fonts across View/Compose/Canvas and verify both themes. Artwork/icon licensing also needs confirmation; unknown provenance is not proof of a proprietary license. |
 | EUC_BLE_LIBRARY | Required for scanning, connection, telemetry and commands. Verify the published version's source/license and transitives. Removal needs a replacement BLE/protocol implementation. |
 | MPAndroidChart / JitPack | The chart page still embeds MPAndroidChart. It is Apache-2.0, not known to be F-Droid-incompatible merely because it uses JitPack. Removing it requires migrating the chart renderer or deliberately removing the chart feature; review source/build provenance with the packager. |
+| AndroidX legacy-support umbrella dependency | `VolumeKeyController` still imports `android.support.v4.media.session.MediaSessionCompat`, `PlaybackStateCompat` and `androidx.media.VolumeProviderCompat`, supplied transitively through this dependency. Deleting the umbrella breaks compilation despite no `androidx.legacy` imports. Replace it with a verified direct AndroidX Media dependency or migrate hardware-volume-key handling before removing it. It is FOSS, not an F-Droid incompatibility. |
 | Location permission on Android 6–11 | Required for legacy BLE discovery, not GPS logging. Removing it prevents scanning on those devices; Android 12+ uses Nearby devices permissions instead. |
 | Legacy storage permissions and public CSV logs | Used for existing CSV logging/trips, especially on older Android. Removing these requires a private-storage/explicit import-export migration and compatibility testing, not simply deleting permissions. User-controlled sharing and raw BLE logs can expose wheel identifiers; sanitize exports. |
 | Foreground service, notifications and battery-optimization exemption option | Support background ride logging and its controls. Removal requires redesign/testing of background recording and may stop logs with the screen off. |

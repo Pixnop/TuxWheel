@@ -111,6 +111,7 @@ dependencies {
     implementation libs.material
     implementation libs.preference.ktx
     implementation libs.constraintlayout
+    implementation libs.legacy.support.v4
 
     // Kotlin
     implementation libs.kotlin.stdlib
