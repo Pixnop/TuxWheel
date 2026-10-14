@@ -11,6 +11,10 @@ TuxWheel is an Android companion for electric unicycles (EUCs). It connects
 over Bluetooth Low Energy (BLE) to display
 telemetry, configure supported wheel settings, and record rides.
 
+**It does not aim at fully replace your EUC's OEM App.**
+>Instead, TuxWheel is designed as a discreet riding app, focusing on dashboard and EUCs data logging.
+N.B: Bluetooth stack relies on retro-engineering so some readings or commands can be fully missing so far**
+
 [Releases](https://github.com/Tritbool/TuxWheel/releases) ·
 [Builds](https://github.com/Tritbool/TuxWheel/actions) ·
 [Issues](https://github.com/Tritbool/TuxWheel/issues)
