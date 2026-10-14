@@ -5,6 +5,9 @@ import androidx.test.core.app.ApplicationProvider
 import io.github.tuxwheel.AppConfig
 import io.github.tuxwheel.R
 import io.github.tuxwheel.ble.BleSessionViewModel
+import io.github.tuxwheel.ble.BleSessionState
+import io.github.tritbool.euc.ble.models.EUCData
+import kotlinx.coroutines.flow.MutableStateFlow
 import io.github.tuxwheel.utils.Constants.WHEEL_TYPE
 import com.google.common.truth.Truth.assertThat
 import io.mockk.every
@@ -56,6 +59,7 @@ class TelemetryPresentationTest {
         config.useMph = false
         config.useFahrenheit = false
         val model = mockk<BleSessionViewModel>(relaxed = true) {
+            every { wheelType } returns WHEEL_TYPE.INMOTION_V2
             every { speedDouble } returns 16.09344
             every { topSpeedDouble } returns 32.18688
             every { averageSpeedDouble } returns 8.04672
@@ -137,6 +141,22 @@ class TelemetryPresentationTest {
                 R.string.imu_temp to "23℉", R.string.fan_status to context.getString(R.string.on),
                 R.string.charging_status to context.getString(R.string.charging)
             ))
+            every { model.wheelType } returns WHEEL_TYPE.KINGSONG
+            val kingsongData = mockk<EUCData>(relaxed = true) {
+                every { speedLimit } returns 40.0
+                every { dynamicSpeedLimit } returns 20.0
+            }
+            val state = MutableStateFlow(BleSessionState(lastData = kingsongData))
+            every { model.sessionState } returns state
+            config.useMph = false
+            assertThat(TelemetryPresentation.values(context, config, model)[R.string.dynamic_speed_limit])
+                .isEqualTo("20.0 km/h")
+            config.useMph = true
+            assertThat(TelemetryPresentation.values(context, config, model)[R.string.dynamic_speed_limit])
+                .isEqualTo("12.4 mph")
+            every { kingsongData.dynamicSpeedLimit } returns null
+            assertThat(TelemetryPresentation.values(context, config, model)[R.string.dynamic_speed_limit])
+                .isEqualTo("—")
         } finally {
             Locale.setDefault(previousLocale)
             stopKoin()

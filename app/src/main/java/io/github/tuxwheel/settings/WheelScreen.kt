@@ -298,11 +298,16 @@ private fun ledModeSetting(appConfig: AppConfig, viewModel: BleSessionViewModel)
 @androidx.annotation.RequiresPermission(android.Manifest.permission.BLUETOOTH_CONNECT)
 private fun speedLimitSetting(appConfig: AppConfig, viewModel: BleSessionViewModel) {
     if (!viewModel.isCommandSupported(CommandType.SET_SPEED_LIMIT)) return
+    val state by viewModel.sessionState.collectAsState()
+    val kingsong = viewModel.wheelType == Constants.WHEEL_TYPE.KINGSONG
+    val reportedLimit = if (kingsong) state.wheelMaxSpeed ?: state.speedLimit?.toInt() else null
+    if (kingsong && (reportedLimit == null || state.alarm1Speed == null ||
+        state.alarm2Speed == null || state.alarm3Speed == null)) return
 
     sliderPref(
         name = stringResource(R.string.max_speed_title),
         desc = stringResource(R.string.tilt_back_description),
-        position = appConfig.wheelMaxSpeed.toFloat(),
+        position = (reportedLimit ?: appConfig.wheelMaxSpeed).toFloat(),
         min = 0f,
         max = 100f,
         unit = R.string.kmh,
@@ -319,6 +324,30 @@ private fun alarmSpeedSetting(appConfig: AppConfig, viewModel: BleSessionViewMod
     // Gotway/Begode overloads this same CommandType as an alarm-mode preset index
     // rather than a raw speed threshold; that case is handled by alarmModeSetting.
     if (viewModel.wheelType == Constants.WHEEL_TYPE.GOTWAY) return
+    val state by viewModel.sessionState.collectAsState()
+    if (viewModel.wheelType == Constants.WHEEL_TYPE.KINGSONG) {
+        val alarms = listOf(state.alarm1Speed, state.alarm2Speed, state.alarm3Speed)
+        if (state.wheelMaxSpeed == null || alarms.any { it == null }) return
+        val titles = listOf(R.string.wheel_alarm1_title, R.string.wheel_alarm2_title, R.string.wheel_alarm3_title)
+        val descriptions = listOf(
+            R.string.wheel_alarm1_description, R.string.wheel_alarm2_description, R.string.wheel_alarm3_description
+        )
+        alarms.forEachIndexed { index, alarm ->
+            sliderPref(
+                name = stringResource(titles[index]),
+                desc = stringResource(descriptions[index]),
+                position = alarm!!.toFloat(),
+                min = 0f,
+                max = 100f,
+                unit = R.string.kmh,
+            ) { value ->
+                val updated = alarms.map { it!! }.toIntArray()
+                updated[index] = value.toInt()
+                viewModel.sendCommand(CommandType.SET_ALARM_SPEED, updated)
+            }
+        }
+        return
+    }
 
     sliderPref(
         name = stringResource(R.string.wheel_alarm1_title),

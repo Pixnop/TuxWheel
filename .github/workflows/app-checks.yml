@@ -22,12 +22,12 @@ jobs:
         with:
           persist-credentials: false
 
-      # 0.1.2 is not yet on Maven Central; 0.1.1 lacks the trafficFlow API.
+      # 0.1.2 is not yet on Maven Central; pin the authentication/speed-limit APIs from PR #74.
       - name: Checkout BLE library
         uses: actions/checkout@v4
         with:
           repository: Tritbool/euc_ble_library
-          ref: be2305b5ed79e7ed761b8954e219aad19dfa632c
+          ref: fa3fe6715a908ea7e8fd3f4365a0be2b854685d2
           path: .ci/euc-ble-library
           persist-credentials: false
 

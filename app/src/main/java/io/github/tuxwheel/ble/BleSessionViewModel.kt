@@ -28,6 +28,9 @@ import io.github.tritbool.euc.ble.exceptions.BLEException
 import io.github.tritbool.euc.ble.models.BMSData
 import io.github.tritbool.euc.ble.models.EUCData
 import io.github.tritbool.euc.ble.models.EUCDevice
+import io.github.tritbool.euc.ble.models.AuthenticationState
+import io.github.tritbool.euc.ble.models.WheelSecurityEvent
+import io.github.tritbool.euc.ble.models.WheelSecurityState
 import io.github.tritbool.euc.ble.protocols.CommandSupport
 import io.github.tritbool.euc.ble.protocols.CommandType
 import io.github.tritbool.euc.ble.protocols.EUCProtocol
@@ -114,6 +117,17 @@ class BleSessionViewModel(application: Application) : AndroidViewModel(applicati
             }
         }
 
+        viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {
+            client.securityStateFlow.collect { security ->
+                updateWheelSecurity(security)
+            }
+        }
+        viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {
+            client.securityEventFlow.collect { event ->
+                handleWheelSecurityEvent(event)
+            }
+        }
+
         client
     }
 
@@ -197,6 +211,57 @@ class BleSessionViewModel(application: Application) : AndroidViewModel(applicati
     // True once the library reported an active protocol for the current connection.
     private var protocolActive: Boolean = false
     private var protocolWatchdogJob: Job? = null
+    private var passwordPromptOffered = false
+    private var passwordResponseJob: Job? = null
+
+    internal fun updateWheelSecurity(security: WheelSecurityState?) {
+        if (security == null) {
+            resetPasswordPrompt()
+        } else if (!passwordPromptOffered) {
+            passwordPromptOffered = true
+            _sessionState.update { it.copy(passwordPromptRequired = true) }
+        }
+        if (security?.authentication == AuthenticationState.AUTHENTICATED) {
+            passwordResponseJob?.cancel()
+            passwordResponseJob = null
+            _sessionState.update { it.copy(passwordPromptRequired = false, passwordPromptError = false) }
+        }
+    }
+
+    internal fun handleWheelSecurityEvent(event: WheelSecurityEvent) {
+        if (event is WheelSecurityEvent.AuthenticationStatus &&
+            event.state == AuthenticationState.REQUIRED && passwordResponseJob != null
+        ) {
+            retryPasswordPrompt()
+        }
+    }
+
+    private fun resetPasswordPrompt() {
+        passwordPromptOffered = false
+        passwordResponseJob?.cancel()
+        passwordResponseJob = null
+        _sessionState.update { it.copy(passwordPromptRequired = false, passwordPromptError = false) }
+    }
+
+    private fun retryPasswordPrompt() {
+        passwordResponseJob?.cancel()
+        passwordResponseJob = null
+        _sessionState.update { it.copy(passwordPromptRequired = true, passwordPromptError = true) }
+    }
+
+    @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
+    fun submitWheelPassword(password: String) {
+        if (!_sessionState.value.passwordPromptRequired) return
+        if (password.isNotEmpty() && (password.length != 4 || password.any { it !in '0'..'9' })) return
+        _sessionState.update { it.copy(passwordPromptRequired = false, passwordPromptError = false) }
+        if (password.isEmpty()) return
+        if (!isCommandSupported(CommandType.AUTHENTICATE)) return
+        passwordResponseJob = viewModelScope.launch {
+            delay(10_000)
+            retryPasswordPrompt()
+        }
+        _eucBleClient.authenticate(password)
+    }
 
     // Grace period given to the library to auto-detect the wheel protocol after the
     // GATT connection is established, before the user is asked to pick one manually.
@@ -373,6 +438,7 @@ class BleSessionViewModel(application: Application) : AndroidViewModel(applicati
     }
 
     private suspend fun updateDisconnectedState() {
+        resetPasswordPrompt()
         wheelIsReady = false
         wheelAlarm = false
         clearBmsPacks()
@@ -643,6 +709,7 @@ class BleSessionViewModel(application: Application) : AndroidViewModel(applicati
     private fun carryForwardSettingsFields(data: EUCData): EUCData {
         val previous = _sessionState.value.lastData ?: return data
         if (previous.manufacturer != data.manufacturer) return data
+        val kingsong = wheel_type_from_string(data.manufacturer) == Constants.WHEEL_TYPE.KINGSONG
 
         return data.copy(
             pedalsMode = data.pedalsMode ?: previous.pedalsMode,
@@ -651,6 +718,12 @@ class BleSessionViewModel(application: Application) : AndroidViewModel(applicati
             usesMiles = data.usesMiles ?: previous.usesMiles,
             autoPowerOffMinutes = data.autoPowerOffMinutes ?: previous.autoPowerOffMinutes,
             tiltBackSpeed = data.tiltBackSpeed ?: previous.tiltBackSpeed,
+            speedLimit = data.speedLimit ?: previous.speedLimit.takeIf { kingsong },
+            dynamicSpeedLimit = data.dynamicSpeedLimit ?: previous.dynamicSpeedLimit.takeIf { kingsong },
+            wheelMaxSpeed = data.wheelMaxSpeed ?: previous.wheelMaxSpeed.takeIf { kingsong },
+            alarm1Speed = data.alarm1Speed ?: previous.alarm1Speed.takeIf { kingsong },
+            alarm2Speed = data.alarm2Speed ?: previous.alarm2Speed.takeIf { kingsong },
+            alarm3Speed = data.alarm3Speed ?: previous.alarm3Speed.takeIf { kingsong },
             ledMode = data.ledMode ?: previous.ledMode,
             lightMode = data.lightMode ?: previous.lightMode,
             alertFlags = data.alertFlags ?: previous.alertFlags,

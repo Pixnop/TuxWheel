@@ -32,9 +32,25 @@ class RawTrafficCaptureTest {
                     .isEqualTo("123456789,0080FF,${direction.name},42,$uuid")
                 assertThat(sample.bytes).asList().containsExactly(0.toByte(), 0x80.toByte(), 0xFF.toByte()).inOrder()
             }
+
         } finally {
             Locale.setDefault(oldLocale)
         }
+    }
+
+    @Test fun `plaintext KingSong password frames never enter the diagnostic queue`() = runTest {
+        val capture = RawTrafficCapture()
+        val bytes = ByteArray(20).apply {
+            this[0] = 0xAA.toByte()
+            this[1] = 0x55
+            "0012".toByteArray().copyInto(this, 2)
+            this[16] = 0x44
+        }
+        capture.record(address, TrafficEvent(1, 123L, TrafficDirection.TX, uuid, bytes), true)
+        val next = async(start = CoroutineStart.UNDISPATCHED) { capture.records.first() }
+        assertThat(next.isCompleted).isFalse()
+        capture.record(address, event(2), true)
+        assertThat(next.await().event.sequence).isEqualTo(2L)
     }
 
     @Test fun `initialization traffic waits for service and retains wheel identity and order`() = runTest {

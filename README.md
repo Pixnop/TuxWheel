@@ -78,6 +78,19 @@ If connection fails, check permissions, Bluetooth, and whether another app
 already holds the wheel connection. Report the model, firmware, and selected
 protocol with any issue; do not assume all devices in a scan are EUCs.
 
+For KingSong, a password popup appears when the security-capable protocol is
+selected. Enter the four-digit wheel password (including leading zeros), or leave
+it empty if no password is set. Empty input or Cancel sends no authentication
+command. Passwords are not saved or automatically replayed on reconnect.
+Unconfirmed authentication offers retry; it does not necessarily mean a wrong
+password. Authentication does not automatically send the experimental wheel
+lock/unlock command.
+
+KingSong maximum/tilt-back speed and all three alarm thresholds use settings
+reported by the wheel, not saved app defaults. Controls wait for a settings
+reply before allowing changes. The telemetry speed-limit row shows the separate
+runtime ceiling (or “—” until known), which may differ from configured maximum speed.
+
 ## Dashboard and pages
 
 Swipe between the dashboard, wheel settings, and enabled optional pages.
@@ -125,6 +138,8 @@ logging restarts. Disabling raw logging or stopping the service clears pending
 events; reconnecting arms capture again if raw logging is enabled. Raw file I/O
 is buffered on a background dispatcher and flushed on close. Only RX records
 should be used as input to a decoder or replay tool; ride and BMS CSVs are unchanged.
+Outgoing KingSong authentication frames are omitted to keep plaintext passwords
+out of raw CSV files; this also produces sequence gaps.
 
 Before sharing CSVs or diagnostic logs, inspect and sanitize them:
 remove MAC addresses, device names, location/route data, and other identifiers.
@@ -134,15 +149,15 @@ Attach only the relevant, sanitized excerpt to a bug report.
 
 BLE is provided by [EUC_BLE_LIBRARY](https://github.com/Tritbool/euc_ble_library),
 not by wheel protocol decoders embedded in this app.
-The dependency is `io.github.tritbool:euc-ble-library:0.1.0`;
+The dependency is `io.github.tritbool:euc-ble-library:0.1.2`;
 its version is pinned in `gradle/libs.versions.toml`.
 
-Raw diagnostics now target the `trafficFlow` / `TrafficEvent` API merged in
-[EUC_BLE_LIBRARY PR #69](https://github.com/Tritbool/euc_ble_library/pull/69).
-That API has not yet been published in the pinned library release. The pin is
-intentionally unchanged: update it to the release containing PR #69 when
-published before building this migration. No speculative version or snapshot
-repository is used.
+Version 0.1.2 is not yet on Maven Central. Until published, build and publish
+`euc-ble-core` to Maven Local from revision
+`fa3fe6715a908ea7e8fd3f4365a0be2b854685d2` using
+`./gradlew :euc-ble-core:publishToMavenLocal`. App checks pin that revision,
+which includes raw traffic and the KingSong authentication/speed-limit APIs from
+[PR #74](https://github.com/Tritbool/euc_ble_library/pull/74).
 
 The library owns discovery/scanning, connections, protocol detection/decoding,
 and BLE transport. The app's `BleSessionViewModel` wraps library callbacks

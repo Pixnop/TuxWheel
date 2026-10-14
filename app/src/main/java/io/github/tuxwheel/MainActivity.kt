@@ -98,6 +98,7 @@ class MainActivity : AppCompatActivity() {
 
     // Dialog shown when protocol auto-detection fails
     private var protocolSelectionDialog: AlertDialog? = null
+    private var wheelPasswordDialog: AlertDialog? = null
 
     // Last BLE error already reported to the user, to avoid repeating the same snackbar
     private var lastShownError: String? = null
@@ -257,6 +258,13 @@ class MainActivity : AppCompatActivity() {
             protocolSelectionDialog = null
         }
 
+        if (state.passwordPromptRequired && wheelPasswordDialog == null && !isPaused) {
+            showWheelPasswordDialog(state.passwordPromptError)
+        } else if (!state.passwordPromptRequired) {
+            wheelPasswordDialog?.dismiss()
+            wheelPasswordDialog = null
+        }
+
         // Data updates
         if (state.lastDataTimestamp != null) {
             val currentBmsSignature = buildBmsDisplaySignature()
@@ -313,6 +321,45 @@ class MainActivity : AppCompatActivity() {
             lastShownError = error
         } else if (error == null) {
             lastShownError = null
+        }
+    }
+
+    @Suppress("MissingPermission")
+    private fun showWheelPasswordDialog(retry: Boolean) {
+        val input = android.widget.EditText(this).apply {
+            inputType = android.text.InputType.TYPE_CLASS_NUMBER or
+                android.text.InputType.TYPE_NUMBER_VARIATION_PASSWORD
+            isSingleLine = true
+            isSaveEnabled = false
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                importantForAutofill = View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS
+            }
+            hint = getString(R.string.password)
+        }
+        val dialog = AlertDialog.Builder(this, R.style.OriginalTheme_Dialog_Alert)
+            .setTitle(R.string.wheel_password_title)
+            .setMessage(if (retry) R.string.wheel_password_retry else R.string.wheel_password_message)
+            .setView(input)
+            .setPositiveButton(android.R.string.ok, null)
+            .setNegativeButton(android.R.string.cancel) { _, _ -> viewModel.submitWheelPassword("") }
+            .setCancelable(false)
+            .create()
+        dialog.setOnDismissListener {
+            input.text.clear()
+            wheelPasswordDialog = null
+        }
+        wheelPasswordDialog = dialog
+        dialog.window?.addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE)
+        dialog.show()
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+            val password = input.text.toString()
+            if (password.isNotEmpty() && (password.length != 4 || password.any { it !in '0'..'9' })) {
+                input.error = getString(R.string.wheel_password_invalid)
+            } else {
+                input.text.clear()
+                viewModel.submitWheelPassword(password)
+                dialog.dismiss()
+            }
         }
     }
 
@@ -549,6 +596,10 @@ class MainActivity : AppCompatActivity() {
     public override fun onResume() {
         super.onResume()
         isPaused = false
+        val state = viewModel.sessionState.value
+        if (state.passwordPromptRequired && wheelPasswordDialog == null) {
+            showWheelPasswordDialog(state.passwordPromptError)
+        }
         if (checkNotificationsPermissions(this)) {
             notifications.update()
         }
@@ -568,6 +619,8 @@ class MainActivity : AppCompatActivity() {
         isPaused = true
         protocolSelectionDialog?.dismiss()
         protocolSelectionDialog = null
+        wheelPasswordDialog?.dismiss()
+        wheelPasswordDialog = null
     }
 
     override fun onStart() {

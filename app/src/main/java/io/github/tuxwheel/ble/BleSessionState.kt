@@ -49,7 +49,9 @@ data class BleSessionState(
 
     // Protocol selection — populated when auto-detection fails in AUTO_WITH_MANUAL_FALLBACK mode
     val protocolSelectionRequired: Boolean = false,
-    val protocolCandidates: List<EUCProtocol> = emptyList()
+    val protocolCandidates: List<EUCProtocol> = emptyList(),
+    val passwordPromptRequired: Boolean = false,
+    val passwordPromptError: Boolean = false
 ) {
     // Helper properties for UI binding
     val isConnected: Boolean

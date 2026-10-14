@@ -459,6 +459,10 @@
     <string name="bmsCell49">Cell 49</string>
     <string name="bmsCell50">Cell 50</string>
     <string name="password">Password</string>
+    <string name="wheel_password_title">KingSong wheel password</string>
+    <string name="wheel_password_message">Enter your four-digit wheel password. Leave empty if no password is set.</string>
+    <string name="wheel_password_invalid">Enter exactly four digits (0–9), or leave empty.</string>
+    <string name="wheel_password_retry">Authentication has not been confirmed. You can retry your four-digit password, or leave empty to continue without sending a password.</string>
     <string name="email">E-mail</string>
     <string name="show_page_events_description">Show the events page</string>
     <string name="show_page_events_title">Events page</string>
