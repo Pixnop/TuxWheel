@@ -1,6 +1,8 @@
 # TuxWheel
+<p align="center">
+  <img src="app/src/main/res/mipmap-xxxhdpi/ic_launcher.png" alt="EUC SoH logo" width="256" height="256" />
+</p>
 
-<img src="app/src/main/res/drawable-nodpi/tuxwheel.png" alt="TuxWheel icon" width="80" />
 
 [![Build](https://github.com/Tritbool/TuxWheel/actions/workflows/gradle.yml/badge.svg)](https://github.com/Tritbool/TuxWheel/actions)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](LICENSE)
