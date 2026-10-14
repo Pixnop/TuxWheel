@@ -100,6 +100,31 @@ class BmsSessionTest {
         assertThat(first.first.cells[0]).isEqualTo(4.1)
     }
 
+    @Test fun `KingSong configured maximum and independent runtime limit survive partial packets`() {
+        publish(manufacturer = "Kingsong", sample = data().copy(
+            speedLimit = 40.0, wheelMaxSpeed = 40, dynamicSpeedLimit = 20.0,
+            alarm1Speed = 0, alarm2Speed = 25, alarm3Speed = 35
+        ))
+        publish(2, manufacturer = "Kingsong")
+        val state = model.sessionState.value
+        assertThat(state.speedLimit).isEqualTo(40.0)
+        assertThat(state.wheelMaxSpeed).isEqualTo(40)
+        assertThat(state.lastData?.dynamicSpeedLimit).isEqualTo(20.0)
+        assertThat(state.alarm1Speed).isEqualTo(0)
+        assertThat(state.alarm2Speed).isEqualTo(25)
+        assertThat(state.alarm3Speed).isEqualTo(35)
+        publish(3, manufacturer = "Kingsong", sample = data().copy(
+            speedLimit = 50.0, wheelMaxSpeed = 50, dynamicSpeedLimit = 17.35
+        ))
+        assertThat(model.sessionState.value.wheelMaxSpeed).isEqualTo(50)
+        assertThat(model.sessionState.value.lastData?.dynamicSpeedLimit).isEqualTo(17.35)
+        model.javaClass.getDeclaredMethod("updateDisconnectedState", Continuation::class.java).apply { isAccessible = true }
+            .invoke(model, mockk<Continuation<Unit>>(relaxed = true))
+        publish(4, manufacturer = "Kingsong")
+        assertThat(model.sessionState.value.wheelMaxSpeed).isNull()
+        assertThat(model.sessionState.value.lastData?.dynamicSpeedLimit).isNull()
+    }
+
     @Test fun `disconnect and reset drop carried packs and next wheel cannot resurrect combined cells`() {
         packs = listOf(pack(0, listOf(4.1, 4.2)), pack(1, listOf(3.7, 3.8)))
         publish()

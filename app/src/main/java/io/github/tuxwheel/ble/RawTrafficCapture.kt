@@ -1,6 +1,7 @@
 package io.github.tuxwheel.ble
 
 import io.github.tritbool.euc.ble.core.TrafficEvent
+import io.github.tritbool.euc.ble.core.TrafficDirection
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -47,6 +48,11 @@ internal class RawTrafficCapture {
         if (!enabled) {
             discardPending()
         } else if (active && address.isNotBlank()) {
+            // Authentication frames contain a plaintext PIN; never queue them for diagnostics.
+            if (event.direction == TrafficDirection.TX && event.bytes.size >= 20 &&
+                event.bytes[0] == 0xAA.toByte() && event.bytes[1] == 0x55.toByte() &&
+                event.bytes[16] == 0x44.toByte()
+            ) return
             pending.trySend(RawTrafficRecord(address, event))
         }
     }

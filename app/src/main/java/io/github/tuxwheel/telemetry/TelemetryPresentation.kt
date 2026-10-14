@@ -82,7 +82,9 @@ object TelemetryPresentation {
             R.string.top_speed to speed(model.topSpeedDouble),
             R.string.average_speed to speed(model.averageSpeedDouble),
             R.string.average_riding_speed to speed(model.averageRidingSpeedDouble),
-            R.string.dynamic_speed_limit to speed(model.speedLimit),
+            R.string.dynamic_speed_limit to if (model.wheelType == WHEEL_TYPE.KINGSONG) {
+                model.sessionState.value.lastData?.dynamicSpeedLimit?.let { speed(it) } ?: "—"
+            } else speed(model.speedLimit),
             R.string.distance to distance(model.distanceDouble),
             R.string.wheel_distance to distance(model.wheelDistanceDouble),
             R.string.user_distance to distance(model.userDistanceDouble),
