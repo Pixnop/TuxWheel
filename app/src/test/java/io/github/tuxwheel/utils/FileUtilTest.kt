@@ -37,4 +37,13 @@ class FileUtilTest {
     @Test fun `reading an unprepared log returns null`() {
         assertThat(FileUtil(mockk()).readBytes()).isNull()
     }
+
+    @Test fun `diagnostic raw and bms files are not trip logs`() {
+        assertThat(LogCsv.isTripLogFileName("2026_10_14_10_00_00.csv")).isTrue()
+        assertThat(LogCsv.isTripLogFileName("2026_10_14_10_00_00.CSV")).isTrue()
+        assertThat(LogCsv.isTripLogFileName("2026_10_14_10_00_00.raw.csv")).isFalse()
+        assertThat(LogCsv.isTripLogFileName("2026_10_14_10_00_00.bms.csv")).isFalse()
+        assertThat(LogCsv.isTripLogFileName("RAW_2026_10_14_10_00_00.csv")).isFalse()
+        assertThat(LogCsv.isTripLogFileName("2026_10_14_10_00_00.txt")).isFalse()
+    }
 }

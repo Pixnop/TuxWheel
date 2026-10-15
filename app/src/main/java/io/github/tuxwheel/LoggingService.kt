@@ -14,6 +14,7 @@ import android.widget.Toast
 import io.github.tuxwheel.data.TripDao
 import io.github.tuxwheel.utils.Constants
 import io.github.tuxwheel.utils.FileUtil
+import io.github.tuxwheel.utils.LogCsv
 import io.github.tuxwheel.utils.NotificationUtil
 import io.github.tritbool.euc.ble.models.BMSData
 import io.github.tuxwheel.utils.PermissionsUtil.checkExternalFilePermission
@@ -145,7 +146,7 @@ class LoggingService : Service() {
                 return false
             }
             appConfig.continueThisDayLogMacException = ""
-            file.writeLine("date,time,speed,voltage,phase_current,current,power,torque,pwm,battery_level,distance,totaldistance,system_temp,temp2,tilt,roll,mode,alert")
+            file.writeLine(LogCsv.HEADER)
         }
         broadcastState(file.absolutePath, true)
         Timber.i("DataLogger Started")
@@ -242,7 +243,7 @@ class LoggingService : Service() {
 
         val rawFile = FileUtil(applicationContext, buffered = true)
         val formatter = SimpleDateFormat("yyyy_MM_dd_HH_mm_ss", Locale.US)
-        val filename = "${formatter.format(Date())}.raw.csv"
+        val filename = "${formatter.format(Date())}${LogCsv.RAW_SUFFIX}"
 
         if (!rawFile.prepareFile(filename, address)) {
             Timber.e("Unable to create RAW BLE log file")
@@ -294,7 +295,7 @@ class LoggingService : Service() {
 
         val file = FileUtil(applicationContext)
         val formatter = SimpleDateFormat("yyyy_MM_dd_HH_mm_ss", Locale.US)
-        val filename = "${formatter.format(Date())}.bms.csv"
+        val filename = "${formatter.format(Date())}${LogCsv.BMS_SUFFIX}"
 
         if (!file.prepareFile(filename, viewModel.mac)) {
             Timber.e("Unable to create BMS log file")
@@ -406,26 +407,23 @@ class LoggingService : Service() {
         val file = fileUtil ?: return
         val formatter = sdf ?: return
         file.writeLine(
-            String.format(
-                Locale.US,
-                "%s,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%d,%.1f,%.1f,%.2f,%.2f,%.2f,%.2f,%s,%d",
-                formatter.format(System.currentTimeMillis()),
-                wd.speedDouble,
-                wd.voltageDouble,
-                wd.phaseCurrentDouble,
-                wd.currentDouble,
-                wd.powerDouble,
-                wd.torque,
-                wd.calculatedPwm,
-                wd.batteryLevel,
-                wd.distanceDouble,
-                wd.totalDistanceDouble,
-                wd.temperatureDouble,
-                wd.motorTemperature / 100.0,
-                wd.angle,
-                wd.roll,
-                wd.modeStr,
-                0
+            LogCsv.formatRow(
+                dateTime = formatter.format(System.currentTimeMillis()),
+                speed = wd.speedDouble,
+                voltage = wd.voltageDouble,
+                phaseCurrent = wd.phaseCurrentDouble,
+                current = wd.currentDouble,
+                power = wd.powerDouble,
+                torque = wd.torque,
+                pwm = wd.calculatedPwm,
+                batteryLevel = wd.batteryLevel,
+                distanceKm = wd.distanceDouble,
+                totalDistanceKm = wd.totalDistanceDouble,
+                systemTemp = wd.temperatureDouble,
+                temp2 = wd.motorTemperature / 100.0,
+                tilt = wd.angle,
+                roll = wd.roll,
+                mode = wd.modeStr,
             )
         )
         if (appConfig.enableBmsData) updateBmsFile()

@@ -248,6 +248,12 @@ class FileUtil(val context: Context, private val buffered: Boolean = false) {
     }
 
     companion object {
+        private val DIAGNOSTIC_FILES_EXCLUSION =
+            " AND " + MediaStore.MediaColumns.DISPLAY_NAME + " NOT LIKE ?" +
+                " AND " + MediaStore.MediaColumns.DISPLAY_NAME + " NOT LIKE ?"
+        private val DIAGNOSTIC_FILES_EXCLUSION_ARGS =
+            arrayOf("%" + LogCsv.RAW_SUFFIX, "%" + LogCsv.BMS_SUFFIX)
+
         private fun sizeToKb(size: Long): String {
             return String.format(Locale.US, "%.2f Kb", size / 1024f)
         }
@@ -263,25 +269,20 @@ class FileUtil(val context: Context, private val buffered: Boolean = false) {
                     ), Constants.LOG_FOLDER_NAME
                 )
                 val filesArray = dir.listFiles() ?: return null
-                for (wheelDir in filesArray) {
-                    if (wheelDir.isDirectory) {
-                        val wheelFiles = wheelDir.listFiles() ?: continue
-                        for (f in wheelFiles) {
-                            val indexExt = f.absolutePath.lastIndexOf(".")
-                            if (f.isDirectory || indexExt < 1) {
-                                continue
-                            }
-                            val extension = f.absolutePath.substring(indexExt)
-                            if (extension == ".csv" && f.name.startsWith(fileStartsWith)) {
-                                val result = FileUtil(context)
-                                result.file = f
-                                result.fileName = f.name
-                                return result
-                            }
-                        }
+                val latest = filesArray
+                    .filter { it.isDirectory }
+                    .flatMap { it.listFiles()?.asList().orEmpty() }
+                    .filter {
+                        !it.isDirectory &&
+                            it.name.startsWith(fileStartsWith) &&
+                            LogCsv.isTripLogFileName(it.name)
                     }
-                }
-                return null
+                    .maxByOrNull { it.lastModified() }
+                    ?: return null
+                val result = FileUtil(context)
+                result.file = latest
+                result.fileName = latest.name
+                return result
             }
             // Android 10+
             val uri = MediaStore.Downloads.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
@@ -294,26 +295,26 @@ class FileUtil(val context: Context, private val buffered: Boolean = false) {
             )
             val where =
                 String.format("%s = 'text/comma-separated-values'", MediaStore.Downloads.MIME_TYPE)
-            val cursor = context.contentResolver.query(
+            context.contentResolver.query(
                 uri,
                 projection,
-                where + " AND " + MediaStore.Downloads.DISPLAY_NAME + " LIKE ?", arrayOf(
-                    "$fileStartsWith%"
-                ),
+                where + " AND " + MediaStore.Downloads.DISPLAY_NAME + " LIKE ?" +
+                    DIAGNOSTIC_FILES_EXCLUSION,
+                arrayOf("$fileStartsWith%", *DIAGNOSTIC_FILES_EXCLUSION_ARGS),
                 MediaStore.Downloads.DATE_MODIFIED + " DESC"
-            )
-            if (cursor != null && cursor.moveToFirst()) {
-                val title =
-                    cursor.getString(0.coerceAtLeast(cursor.getColumnIndex(MediaStore.Downloads.DISPLAY_NAME)))
-                val mediaId =
-                    cursor.getString(0.coerceAtLeast(cursor.getColumnIndex(MediaStore.Downloads._ID)))
-                cursor.close()
-                val result = FileUtil(context)
-                val downloads = MediaStore.Downloads.getContentUri(MediaStore.VOLUME_EXTERNAL)
-                result.uri = Uri.withAppendedPath(downloads, mediaId)
-                result.file = result.getPathFromUri(result.uri)?.let { File(it) }
-                result.fileName = title
-                return result
+            )?.use { cursor ->
+                if (cursor.moveToFirst()) {
+                    val title =
+                        cursor.getString(0.coerceAtLeast(cursor.getColumnIndex(MediaStore.Downloads.DISPLAY_NAME)))
+                    val mediaId =
+                        cursor.getString(0.coerceAtLeast(cursor.getColumnIndex(MediaStore.Downloads._ID)))
+                    val result = FileUtil(context)
+                    val downloads = MediaStore.Downloads.getContentUri(MediaStore.VOLUME_EXTERNAL)
+                    result.uri = Uri.withAppendedPath(downloads, mediaId)
+                    result.file = result.getPathFromUri(result.uri)?.let { File(it) }
+                    result.fileName = title
+                    return result
+                }
             }
             return null
         }
@@ -352,8 +353,7 @@ class FileUtil(val context: Context, private val buffered: Boolean = false) {
                             if (f.isDirectory || indexExt < 1) {
                                 continue
                             }
-                            val extension = f.absolutePath.substring(indexExt)
-                            if (extension == ".csv" && !f.name.startsWith("RAW")) {
+                            if (LogCsv.isTripLogFileName(f.name)) {
                                 try {
                                     val contentUri = FileProvider.getUriForFile(
                                         context,
@@ -397,8 +397,9 @@ class FileUtil(val context: Context, private val buffered: Boolean = false) {
             context.contentResolver.query(
                 uri,
                 tripProjection,
-                where + " AND " + MediaStore.Downloads.DISPLAY_NAME + " NOT LIKE ?",
-                arrayOf("RAW_%"),
+                where + " AND " + MediaStore.Downloads.DISPLAY_NAME + " NOT LIKE ?" +
+                    DIAGNOSTIC_FILES_EXCLUSION,
+                arrayOf("RAW_%", *DIAGNOSTIC_FILES_EXCLUSION_ARGS),
                 MediaStore.Downloads.DATE_MODIFIED + " DESC"
             )?.use { cursor ->
                 if (cursor.moveToFirst()) {

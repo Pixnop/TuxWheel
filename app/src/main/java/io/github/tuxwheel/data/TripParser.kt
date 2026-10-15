@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.Uri
 import android.os.Build
 import io.github.tuxwheel.R
+import io.github.tuxwheel.utils.LogCsv
 import io.github.tuxwheel.utils.LogHeaderEnum
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.get
@@ -91,13 +92,22 @@ object TripParser: KoinComponent {
                 } catch (_: IllegalArgumentException) {
                 }
             }
+            val timeIndex = header[LogHeaderEnum.TIME]
+            val dateIndex = header[LogHeaderEnum.DATE]
+            if (timeIndex == null || dateIndex == null) {
+                lastErrorValue = "Missing date/time columns in log header"
+                Timber.w(lastErrorValue)
+                return Pair(emptyList(), null)
+            }
             reader.forEachLine { line ->
                 checkCancellation()
                 if (line.isNotEmpty())
                 {
                     val row = line.split(",")
-                    val timeString = row[header[LogHeaderEnum.TIME]!!]
-                    val dateString = row[header[LogHeaderEnum.DATE]!!]
+                    fun cell(column: LogHeaderEnum): String? =
+                        header[column]?.let { row.getOrNull(it) }
+                    val timeString = row.getOrNull(timeIndex) ?: return@forEachLine
+                    val dateString = row.getOrNull(dateIndex) ?: return@forEachLine
                     val logTick = LogTick(
                         timeString = timeString,
                         timePlusDayOfWeek = sdfFullDate.parse(
@@ -105,17 +115,15 @@ object TripParser: KoinComponent {
                             ParsePosition(8)
                         )!!.time / 100f,
                         time = sdfTime.parse(timeString)!!.time / 100f,
-                        batteryLevel = row[header[LogHeaderEnum.BATTERY_LEVEL]!!].toIntOrNull()
-                            ?: 0,
-                        voltage = row[header[LogHeaderEnum.VOLTAGE]!!].toDoubleOrNull() ?: 0.0,
-                        current = row[header[LogHeaderEnum.CURRENT]!!].toDoubleOrNull() ?: 0.0,
-                        power = row[header[LogHeaderEnum.POWER]!!].toDoubleOrNull() ?: 0.0,
-                        speed = row[header[LogHeaderEnum.SPEED]!!].toDoubleOrNull() ?: 0.0,
-                        temperature = row[header[LogHeaderEnum.SYSTEM_TEMP]!!].toIntOrNull() ?: 0,
-                        pwm = row[header[LogHeaderEnum.PWM]!!].toDoubleOrNull() ?: 0.0,
-                        distance = row[header[LogHeaderEnum.DISTANCE]!!].toIntOrNull() ?: 0,
-                        totalDistance = row[header[LogHeaderEnum.TOTALDISTANCE]!!].toIntOrNull()
-                            ?: 0
+                        batteryLevel = cell(LogHeaderEnum.BATTERY_LEVEL)?.toIntOrNull() ?: 0,
+                        voltage = cell(LogHeaderEnum.VOLTAGE)?.toDoubleOrNull() ?: 0.0,
+                        current = cell(LogHeaderEnum.CURRENT)?.toDoubleOrNull() ?: 0.0,
+                        power = cell(LogHeaderEnum.POWER)?.toDoubleOrNull() ?: 0.0,
+                        speed = cell(LogHeaderEnum.SPEED)?.toDoubleOrNull() ?: 0.0,
+                        temperature = LogCsv.parseTemperature(cell(LogHeaderEnum.SYSTEM_TEMP)),
+                        pwm = cell(LogHeaderEnum.PWM)?.toDoubleOrNull() ?: 0.0,
+                        distance = LogCsv.parseDistanceMeters(cell(LogHeaderEnum.DISTANCE)),
+                        totalDistance = LogCsv.parseDistanceMeters(cell(LogHeaderEnum.TOTALDISTANCE))
                     )
                     resultList.add(logTick)
                 }
