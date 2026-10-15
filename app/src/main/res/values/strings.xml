@@ -543,6 +543,17 @@
     <string name="wheel_lock_status_unlocked">Unlocked</string>
     <string name="wheel_lock_status_unknown">Unknown</string>
     <string name="lock_wheel">Lock wheel</string>
+    <string name="speed_limiter_title">Speed limiter</string>
+    <string name="speed_limiter_enabled_title">Speed limiter</string>
+    <string name="speed_limiter_enabled_description">Limit the wheel max speed. Your own max speed is restored when turned off</string>
+    <string name="speed_limiter_speed_title">Limited speed</string>
+    <string name="speed_limiter_speed_description">Max speed applied while the speed limiter is on</string>
+    <string name="speed_limiter_saved_title">Your max speed</string>
+    <string name="speed_limiter_saved_description">Restored when the speed limiter is turned off</string>
+    <string name="speed_limiter_not_connected">Connect a wheel that supports speed limit to turn the limiter on or off</string>
+    <string name="speed_limiter_on">Speed limiter on</string>
+    <string name="speed_limiter_off">Speed limiter off</string>
+    <string name="speed_limiter_unavailable">Speed limiter unavailable for this wheel</string>
     <string name="lock_wheel_confirmation">Locking disables the wheel. Only continue while the wheel is stationary.</string>
     <string name="unlock_wheel">Unlock wheel</string>
     <string name="unlock_wheel_confirmation">Unlocking reactivates the wheel. Only continue while the wheel is stationary.</string>

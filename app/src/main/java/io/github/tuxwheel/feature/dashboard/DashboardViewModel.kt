@@ -7,8 +7,11 @@ import io.github.tuxwheel.AppConfig
 import io.github.tuxwheel.R
 import io.github.tuxwheel.ble.BleSessionState
 import io.github.tuxwheel.ble.BleSessionViewModel
+import io.github.tuxwheel.feature.speedlimiter.SpeedLimiter
 import io.github.tuxwheel.utils.Calculator
 import io.github.tuxwheel.utils.MathsUtil
+import io.github.tritbool.euc.ble.models.WheelLockState
+import io.github.tritbool.euc.ble.protocols.CommandType
 import kotlinx.coroutines.flow.*
 
 class DashboardViewModel(
@@ -92,6 +95,16 @@ class DashboardViewModel(
             speedUnit = unit(if (mph) R.string.mph else R.string.kmh),
             catalogue = catalogue,
             infoBlocks = DashboardCatalogue.select(titles, catalogue, aliases),
+            lockSupported = session.isConnected && listOf(CommandType.LOCK, CommandType.UNLOCK,
+                CommandType.REQUEST_LOCK_STATE).all(bleViewModel::isCommandSupported),
+            wheelLocked = when (session.wheelLockState) {
+                WheelLockState.LOCKED -> true
+                WheelLockState.UNLOCKED -> false
+                WheelLockState.UNKNOWN -> appConfig.wheelLocked
+            },
+            speedLimiterAvailable = SpeedLimiter.isAvailable(bleViewModel, session),
+            speedLimiterEnabled = appConfig.speedLimiterEnabled,
+            speedLimiterSpeed = appConfig.speedLimiterSpeed,
             batteryCalculation = if (appConfig.useBetterPercents || appConfig.customPercents) {
                 if (appConfig.customPercents && !bleViewModel.isVoltageTiltbackUnsupported) "custom" else "true"
             } else ""

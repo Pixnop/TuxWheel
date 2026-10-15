@@ -64,6 +64,7 @@ object ThemeManager: KoinComponent {
         ajdm[ThemeIconEnum.MenuBluetooth] = R.drawable.ajdm_bt_new
         // settings page
         original[ThemeIconEnum.SettingsSpeedometer] = R.drawable.ic_speedometer_white_24dp
+        original[ThemeIconEnum.SettingsSpeedLimiter] = R.drawable.ic_speed_limit
         original[ThemeIconEnum.SettingsLog] = R.drawable.ic_show_chart_white_24dp
         original[ThemeIconEnum.SettingsBug] = R.drawable.ic_baseline_bug_report_24
         original[ThemeIconEnum.SettingsAbout] = R.drawable.ic_baseline_info_24
@@ -82,6 +83,7 @@ object ThemeManager: KoinComponent {
         original[ThemeIconEnum.SettingsConnectionSound] = R.drawable.ic_baseline_music_note_24
         original[ThemeIconEnum.SettingsAutoMute] = R.drawable.ic_baseline_volume_off_24
         ajdm[ThemeIconEnum.SettingsSpeedometer] = R.drawable.ajdm_sett5_new
+        ajdm[ThemeIconEnum.SettingsSpeedLimiter] = R.drawable.ic_speed_limit
         ajdm[ThemeIconEnum.SettingsLog] = R.drawable.ajdm_log_new_set
         ajdm[ThemeIconEnum.SettingsBug] = R.drawable.ajdm_flow
         ajdm[ThemeIconEnum.SettingsAbout] = R.drawable.ajdm_info
