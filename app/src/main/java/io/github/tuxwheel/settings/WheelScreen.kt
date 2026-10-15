@@ -16,6 +16,7 @@ import androidx.compose.ui.window.DialogProperties
 import io.github.tuxwheel.AppConfig
 import io.github.tuxwheel.R
 import io.github.tuxwheel.ble.BleSessionViewModel
+import io.github.tuxwheel.feature.speedlimiter.SpeedLimiter
 import io.github.tuxwheel.utils.Constants
 import io.github.tritbool.euc.ble.protocols.CommandType
 import io.github.tritbool.euc.ble.models.WheelLockState
@@ -337,8 +338,8 @@ private fun speedLimitSetting(appConfig: AppConfig, viewModel: BleSessionViewMod
             name = stringResource(R.string.max_speed_title),
             desc = stringResource(R.string.speed_limiter_saved_description),
             position = appConfig.speedLimiterSavedMaxSpeed.toFloat(),
-            min = 0f,
-            max = 100f,
+            min = SpeedLimiter.MIN_SPEED.toFloat(),
+            max = SpeedLimiter.MAX_SPEED.toFloat(),
             unit = R.string.kmh,
         ) {
             appConfig.speedLimiterSavedMaxSpeed = it.toInt()

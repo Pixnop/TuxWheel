@@ -353,7 +353,7 @@ class AppConfig(var context: Context) : KoinComponent {
 
     /** User's own wheel max speed (km/h), restored when the speed limiter is turned off. */
     var speedLimiterSavedMaxSpeed: Int
-        get() = getValue("speed_limiter_saved_max_speed", wheelMaxSpeed)
+        get() = getValue("speed_limiter_saved_max_speed", 25)
         set(value) = setValue("speed_limiter_saved_max_speed", value)
 
     var connectBeep: Boolean

@@ -36,10 +36,26 @@ class DashboardActions(
         toggleLight(session, config)
     }
 
-    @SuppressLint("MissingPermission")
+    /** Immediate while stationary; asks for confirmation if the wheel is moving. */
     fun toggleLock(state: DashboardUiState) {
         if (!active || !state.lockSupported) return
         val lock = !state.wheelLocked
+        if (kotlin.math.abs(state.speed) < STATIONARY_SPEED_KMH) {
+            setLocked(lock)
+            return
+        }
+        dialog?.dismiss()
+        dialog = AlertDialog.Builder(context, R.style.OriginalTheme_Dialog_Alert)
+            .setTitle(if (lock) R.string.lock_wheel else R.string.unlock_wheel)
+            .setMessage(if (lock) R.string.lock_wheel_confirmation else R.string.unlock_wheel_confirmation)
+            .setPositiveButton(android.R.string.ok) { _, _ -> if (active) setLocked(lock) }
+            .setNegativeButton(android.R.string.cancel, null)
+            .setCancelable(true).create()
+        dialog?.show()
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun setLocked(lock: Boolean) {
         config.wheelLocked = lock
         session.setWheelLocked(lock)
     }
@@ -82,6 +98,8 @@ class DashboardActions(
     fun dispose() { active = false; dialog?.dismiss(); dialog = null }
 
     companion object {
+        private const val STATIONARY_SPEED_KMH = 1f
+
         fun toggleLight(session: BleSessionViewModel, config: AppConfig) {
             val on = session.isCommandSupported(CommandType.LIGHT_ON)
             val off = session.isCommandSupported(CommandType.LIGHT_OFF)
