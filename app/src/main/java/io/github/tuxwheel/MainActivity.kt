@@ -45,7 +45,6 @@ import io.github.tuxwheel.databinding.ActivityMainBinding
 import io.github.tuxwheel.settings.mainScreen
 import io.github.tuxwheel.ui.theme.AppTheme
 import io.github.tuxwheel.utils.*
-import io.github.tuxwheel.utils.Alarms.checkAlarm
 import io.github.tuxwheel.utils.PermissionsUtil.checkBlePermissions
 import io.github.tuxwheel.utils.PermissionsUtil.checkExternalFilePermission
 import io.github.tuxwheel.utils.PermissionsUtil.checkNotificationsPermissions
@@ -291,11 +290,6 @@ class MainActivity : AppCompatActivity() {
                 viewModel.speedDouble > appConfig.startAutoLoggingWhenIsMovingMore
             ) {
                 toggleLoggingService()
-            }
-
-            // Check alarms
-            if (appConfig.alarmsEnabled) {
-                checkAlarm(viewModel.calculatedPwm / 100, applicationContext)
             }
 
             // Update PiP if active

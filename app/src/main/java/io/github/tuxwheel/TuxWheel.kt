@@ -3,6 +3,8 @@ package io.github.tuxwheel
 import android.app.Application
 import android.content.res.Configuration
 import io.github.tuxwheel.di.*
+import io.github.tuxwheel.utils.AlarmMonitor
+import org.koin.android.ext.android.get
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
 import timber.log.Timber
@@ -17,6 +19,7 @@ class TuxWheel : Application() {
         if (BuildConfig.DEBUG) {
             Timber.plant(Timber.DebugTree())
         }
+        get<AlarmMonitor>().start()
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {

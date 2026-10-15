@@ -1,6 +1,7 @@
 package io.github.tuxwheel.di
 
 import io.github.tuxwheel.ble.BleSessionViewModel
+import io.github.tuxwheel.utils.AlarmMonitor
 import org.koin.android.ext.koin.androidApplication
 import org.koin.dsl.module
 
@@ -39,4 +40,6 @@ val bleModule = module {
         val viewModel: BleSessionViewModel = get()
         viewModel.sessionState
     }
+
+    single { AlarmMonitor(androidApplication(), get(), get()) }
 }

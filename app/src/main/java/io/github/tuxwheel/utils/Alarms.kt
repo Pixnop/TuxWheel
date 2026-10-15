@@ -204,8 +204,8 @@ object Alarms: KoinComponent {
         if (currentAlarmExecuting.value) {
             return true
         }
-        val alarmCurrent = appConfig.alarmCurrent * 100
-        val alarmPhaseCurrent = appConfig.alarmPhaseCurrent * 100
+        val alarmCurrent = appConfig.alarmCurrent
+        val alarmPhaseCurrent = appConfig.alarmPhaseCurrent
         if (alarmCurrent > 0 && abs(viewModel.currentDouble) >= alarmCurrent) {
             raiseAlarm(
                 ALARM_TYPE.CURRENT,
