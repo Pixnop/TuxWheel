@@ -96,19 +96,19 @@ private fun passwordManagementSetting(viewModel: BleSessionViewModel) {
         viewModel.clearWheelPasswordOperationResult()
         showDialog = true
     }
-    if (showDialog) {
-        LaunchedEffect(state.passwordOperationStatus) {
-            val message = when (state.passwordOperationStatus) {
-                PasswordOperationStatus.CONFIRMED -> R.string.wheel_password_confirmed
-                PasswordOperationStatus.TIMEOUT_UNCONFIRMED -> R.string.wheel_password_unconfirmed
-                else -> null
-            }
-            if (message != null && !state.passwordOperationPending) {
-                Toast.makeText(context, message, Toast.LENGTH_LONG).show()
-                viewModel.clearWheelPasswordOperationResult()
-                showDialog = false
-            }
+    LaunchedEffect(state.passwordOperationStatus) {
+        val message = when (state.passwordOperationStatus) {
+            PasswordOperationStatus.CONFIRMED -> R.string.wheel_password_confirmed
+            PasswordOperationStatus.TIMEOUT_UNCONFIRMED -> R.string.wheel_password_unconfirmed
+            else -> null
         }
+        if (message != null && !state.passwordOperationPending) {
+            Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+            viewModel.clearWheelPasswordOperationResult()
+            showDialog = false
+        }
+    }
+    if (showDialog) {
         WheelPasswordDialog(
             viewModel = viewModel,
             state = state,
