@@ -91,7 +91,7 @@ private fun BoxScope.DashboardQuickControls(state: DashboardUiState, actions: Da
     if (state.speedLimiterAvailable || state.speedLimiterEnabled) {
         IconButton(
             onClick = { actions.toggleSpeedLimiter() },
-            modifier = Modifier.align(Alignment.TopCenter).padding(4.dp).size(48.dp)
+            modifier = Modifier.align(Alignment.TopEnd).padding(4.dp).size(48.dp)
         ) {
             Image(
                 painter = painterResource(
