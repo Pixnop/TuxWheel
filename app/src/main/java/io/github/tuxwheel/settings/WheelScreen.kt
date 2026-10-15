@@ -1,5 +1,6 @@
 package io.github.tuxwheel.settings
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.rememberScrollState
@@ -9,12 +10,14 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -84,6 +87,7 @@ private fun passwordManagementSetting(viewModel: BleSessionViewModel) {
     if (!(supportsSet || supportsChange || supportsRemove)) return
 
     val state by viewModel.sessionState.collectAsState()
+    val context = LocalContext.current
     var showDialog by remember { mutableStateOf(false) }
     clickablePref(
         name = stringResource(R.string.wheel_password_management_title),
@@ -93,6 +97,18 @@ private fun passwordManagementSetting(viewModel: BleSessionViewModel) {
         showDialog = true
     }
     if (showDialog) {
+        LaunchedEffect(state.passwordOperationStatus) {
+            val message = when (state.passwordOperationStatus) {
+                PasswordOperationStatus.CONFIRMED -> R.string.wheel_password_confirmed
+                PasswordOperationStatus.TIMEOUT_UNCONFIRMED -> R.string.wheel_password_unconfirmed
+                else -> null
+            }
+            if (message != null && !state.passwordOperationPending) {
+                Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+                viewModel.clearWheelPasswordOperationResult()
+                showDialog = false
+            }
+        }
         WheelPasswordDialog(
             viewModel = viewModel,
             state = state,
@@ -119,17 +135,18 @@ private fun WheelPasswordDialog(
     }
     var currentPassword by remember { mutableStateOf("") }
     var newPassword by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
     var submitError by remember { mutableStateOf(false) }
 
     val pending = state.passwordOperationPending
     val result = state.passwordOperationStatus
-    val validCurrent = currentPassword.length == 4 && currentPassword.all { it in '0'..'9' }
-    val validNew = newPassword.length == 4 && newPassword.all { it in '0'..'9' }
-    val canSubmit = when (operation) {
-        PasswordOperation.SET -> validNew && supportsSet
-        PasswordOperation.CHANGE -> validCurrent && validNew && supportsChange
-        PasswordOperation.REMOVE -> validCurrent && supportsRemove
-    }
+    val canSubmit = validWheelPasswordInput(operation, currentPassword, newPassword, confirmPassword) &&
+        when (operation) {
+            PasswordOperation.SET -> supportsSet
+            PasswordOperation.CHANGE -> supportsChange
+            PasswordOperation.REMOVE -> supportsRemove
+        }
+    val passwordMismatch = confirmPassword.isNotEmpty() && confirmPassword != newPassword
     val hasResult = result != null || state.passwordOperationError || submitError
 
     fun clearResult() {
@@ -140,6 +157,7 @@ private fun WheelPasswordDialog(
     fun dismiss() {
         currentPassword = ""
         newPassword = ""
+        confirmPassword = ""
         viewModel.clearWheelPasswordOperationResult()
         onDismiss()
     }
@@ -148,7 +166,7 @@ private fun WheelPasswordDialog(
         onDismissRequest = { dismiss() },
         title = { Text(stringResource(R.string.wheel_password_management_title)) },
         text = {
-            Column {
+            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
                 Text(stringResource(R.string.wheel_password_management_warning))
                 Row {
                     TextButton(
@@ -157,6 +175,7 @@ private fun WheelPasswordDialog(
                             operation = PasswordOperation.SET
                             currentPassword = ""
                             newPassword = ""
+                            confirmPassword = ""
                             clearResult()
                         },
                     ) { Text(stringResource(R.string.wheel_password_set)) }
@@ -166,6 +185,7 @@ private fun WheelPasswordDialog(
                             operation = PasswordOperation.CHANGE
                             currentPassword = ""
                             newPassword = ""
+                            confirmPassword = ""
                             clearResult()
                         },
                     ) { Text(stringResource(R.string.wheel_password_change)) }
@@ -175,6 +195,7 @@ private fun WheelPasswordDialog(
                             operation = PasswordOperation.REMOVE
                             currentPassword = ""
                             newPassword = ""
+                            confirmPassword = ""
                             clearResult()
                         },
                     ) { Text(stringResource(R.string.wheel_password_remove)) }
@@ -230,13 +251,29 @@ private fun WheelPasswordDialog(
                         visualTransformation = PasswordVisualTransformation(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
                     )
+                    OutlinedTextField(
+                        value = confirmPassword,
+                        onValueChange = { value ->
+                            if (value.length <= 4 && value.all { it in '0'..'9' }) {
+                                confirmPassword = value
+                                clearResult()
+                            }
+                        },
+                        label = { Text(stringResource(R.string.wheel_password_confirm)) },
+                        isError = passwordMismatch,
+                        supportingText = {
+                            if (passwordMismatch) {
+                                Text(stringResource(R.string.wheel_password_mismatch))
+                            }
+                        },
+                        singleLine = true,
+                        enabled = !pending,
+                        visualTransformation = PasswordVisualTransformation(),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                    )
                 }
                 when {
                     pending -> Text(stringResource(R.string.wheel_password_waiting))
-                    result == PasswordOperationStatus.CONFIRMED ->
-                        Text(stringResource(R.string.wheel_password_confirmed))
-                    result == PasswordOperationStatus.TIMEOUT_UNCONFIRMED ->
-                        Text(stringResource(R.string.wheel_password_unconfirmed))
                     state.passwordOperationError || submitError ->
                         Text(stringResource(R.string.wheel_password_send_failed))
                 }
@@ -256,6 +293,7 @@ private fun WheelPasswordDialog(
                         if (!accepted) submitError = true
                         currentPassword = ""
                         newPassword = ""
+                        confirmPassword = ""
                     },
                 ) { Text(stringResource(R.string.wheel_password_submit)) }
             }
@@ -267,6 +305,21 @@ private fun WheelPasswordDialog(
         },
         properties = DialogProperties(dismissOnClickOutside = !pending),
     )
+}
+
+internal fun validWheelPasswordInput(
+    operation: PasswordOperation,
+    currentPassword: String,
+    newPassword: String,
+    confirmPassword: String,
+): Boolean {
+    fun valid(password: String) = password.length == 4 && password.all { it in '0'..'9' }
+    return when (operation) {
+        PasswordOperation.SET -> valid(newPassword) && newPassword == confirmPassword
+        PasswordOperation.CHANGE ->
+            valid(currentPassword) && valid(newPassword) && newPassword == confirmPassword
+        PasswordOperation.REMOVE -> valid(currentPassword)
+    }
 }
 
 @Composable
