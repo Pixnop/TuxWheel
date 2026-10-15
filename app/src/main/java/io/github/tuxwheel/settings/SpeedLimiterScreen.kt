@@ -8,6 +8,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -32,6 +33,7 @@ fun speedLimiterScreen(
     val available = SpeedLimiter.isAvailable(viewModel, state)
     val enabled = remember { mutableStateOf(appConfig.speedLimiterEnabled) }
     var savedMaxSpeed by remember { mutableIntStateOf(appConfig.speedLimiterSavedMaxSpeed) }
+    var sliderRevision by remember { mutableIntStateOf(0) }
 
     Column(
         modifier = Modifier.verticalScroll(rememberScrollState())
@@ -46,20 +48,27 @@ fun speedLimiterScreen(
             val applied = if (checked) SpeedLimiter.enable(viewModel, appConfig)
                 else SpeedLimiter.disable(viewModel, appConfig)
             if (!applied) {
-                Toast.makeText(context, R.string.speed_limiter_unavailable, Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, SpeedLimiter.refusalMessage(viewModel), Toast.LENGTH_SHORT).show()
             }
             enabled.value = appConfig.speedLimiterEnabled
             savedMaxSpeed = appConfig.speedLimiterSavedMaxSpeed
         }
-        sliderPref(
-            name = stringResource(R.string.speed_limiter_speed_title),
-            desc = stringResource(R.string.speed_limiter_speed_description),
-            position = appConfig.speedLimiterSpeed.toFloat(),
-            min = SpeedLimiter.MIN_SPEED.toFloat(),
-            max = SpeedLimiter.MAX_SPEED.toFloat(),
-            unit = R.string.kmh,
-        ) {
-            SpeedLimiter.setLimit(viewModel, appConfig, it.toInt())
+        // Recreated after each change so the slider shows the stored, possibly clamped, limit.
+        key(sliderRevision) {
+            val maxLimit = SpeedLimiter.maxLimit(state, appConfig)
+            sliderPref(
+                name = stringResource(R.string.speed_limiter_speed_title),
+                desc = stringResource(R.string.speed_limiter_speed_description),
+                position = appConfig.speedLimiterSpeed.coerceAtMost(maxLimit).toFloat(),
+                min = SpeedLimiter.MIN_SPEED.toFloat(),
+                max = maxLimit.toFloat(),
+                unit = R.string.kmh,
+            ) {
+                if (!SpeedLimiter.setLimit(viewModel, appConfig, it.toInt())) {
+                    Toast.makeText(context, SpeedLimiter.refusalMessage(viewModel), Toast.LENGTH_SHORT).show()
+                }
+                sliderRevision++
+            }
         }
         if (enabled.value) {
             baseSettings(

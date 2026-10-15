@@ -13,6 +13,7 @@ import io.github.tuxwheel.ble.BleSessionViewModel
 import io.github.tuxwheel.feature.speedlimiter.SpeedLimiter
 import io.github.tuxwheel.utils.Alarms
 import io.github.tuxwheel.utils.SomeUtil
+import io.github.tritbool.euc.ble.models.WheelLockState
 import io.github.tritbool.euc.ble.protocols.CommandType
 
 /** Dashboard commands live in gesture callbacks, never in Compose drawing or recomposition. */
@@ -36,28 +37,16 @@ class DashboardActions(
         toggleLight(session, config)
     }
 
-    /** Immediate while stationary; asks for confirmation if the wheel is moving. */
+    /** The session picks the command from the wheel's reported state and refuses to lock a moving wheel. */
+    @SuppressLint("MissingPermission")
     fun toggleLock(state: DashboardUiState) {
         if (!active || !state.lockSupported) return
-        val lock = !state.wheelLocked
-        if (kotlin.math.abs(state.speed) < STATIONARY_SPEED_KMH) {
-            setLocked(lock)
-            return
+        val current = session.sessionState.value.wheelLockState
+        if (session.toggleWheelLock()) {
+            config.wheelLocked = current == WheelLockState.UNLOCKED
+        } else if (current == WheelLockState.UNLOCKED) {
+            Toast.makeText(context, R.string.wheel_lock_refused, Toast.LENGTH_SHORT).show()
         }
-        dialog?.dismiss()
-        dialog = AlertDialog.Builder(context, R.style.OriginalTheme_Dialog_Alert)
-            .setTitle(if (lock) R.string.lock_wheel else R.string.unlock_wheel)
-            .setMessage(if (lock) R.string.lock_wheel_confirmation else R.string.unlock_wheel_confirmation)
-            .setPositiveButton(android.R.string.ok) { _, _ -> if (active) setLocked(lock) }
-            .setNegativeButton(android.R.string.cancel, null)
-            .setCancelable(true).create()
-        dialog?.show()
-    }
-
-    @SuppressLint("MissingPermission")
-    private fun setLocked(lock: Boolean) {
-        config.wheelLocked = lock
-        session.setWheelLocked(lock)
     }
 
     @SuppressLint("MissingPermission")
@@ -68,7 +57,7 @@ class DashboardActions(
     fun toggleSpeedLimiter() {
         if (!active) return
         if (!SpeedLimiter.toggle(session, config)) {
-            Toast.makeText(context, R.string.speed_limiter_unavailable, Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, SpeedLimiter.refusalMessage(session), Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -98,8 +87,6 @@ class DashboardActions(
     fun dispose() { active = false; dialog?.dismiss(); dialog = null }
 
     companion object {
-        private const val STATIONARY_SPEED_KMH = 1f
-
         fun toggleLight(session: BleSessionViewModel, config: AppConfig) {
             val on = session.isCommandSupported(CommandType.LIGHT_ON)
             val off = session.isCommandSupported(CommandType.LIGHT_OFF)

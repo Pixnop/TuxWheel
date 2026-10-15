@@ -415,6 +415,7 @@ private fun lockSetting(appConfig: AppConfig, viewModel: BleSessionViewModel) {
     val supportsLockState = viewModel.isCommandSupported(CommandType.REQUEST_LOCK_STATE)
     if (!(supportsLock && supportsUnlock && supportsLockState)) return
 
+    val context = LocalContext.current
     val state by viewModel.sessionState.collectAsState()
     val checkedState = remember(state.selectedDevice?.address) { mutableStateOf(appConfig.wheelLocked) }
     androidx.compose.runtime.LaunchedEffect(
@@ -445,8 +446,12 @@ private fun lockSetting(appConfig: AppConfig, viewModel: BleSessionViewModel) {
         desc = stringResource(R.string.lock_mode_description),
         defaultState = checkedState,
     ) { checked ->
-        appConfig.wheelLocked = checked
-        viewModel.setWheelLocked(checked)
+        if (viewModel.setWheelLocked(checked)) {
+            appConfig.wheelLocked = checked
+        } else {
+            checkedState.value = !checked
+            Toast.makeText(context, R.string.wheel_lock_refused, Toast.LENGTH_SHORT).show()
+        }
     }
 }
 

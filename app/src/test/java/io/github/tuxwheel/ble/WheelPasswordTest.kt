@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.test.core.app.ApplicationProvider
 import com.google.common.truth.Truth.assertThat
 import io.github.tritbool.euc.ble.EucBleClient
+import io.github.tritbool.euc.ble.core.BLEConstants
 import io.github.tritbool.euc.ble.models.AuthenticationState
 import io.github.tritbool.euc.ble.models.WheelSecurityEvent
 import io.github.tritbool.euc.ble.models.WheelSecurityState
@@ -18,6 +19,7 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -73,6 +75,14 @@ class WheelPasswordTest {
         every { client.getCommandSupport(CommandType.LOCK) } returns CommandSupport.SUPPORTED
         every { client.getCommandSupport(CommandType.UNLOCK) } returns CommandSupport.SUPPORTED
         every { client.getCommandSupport(CommandType.REQUEST_LOCK_STATE) } returns CommandSupport.SUPPORTED
+        @Suppress("UNCHECKED_CAST")
+        val state = model.javaClass.getDeclaredField("_sessionState").apply { isAccessible = true }
+            .get(model) as MutableStateFlow<BleSessionState>
+        state.value = state.value.copy(
+            connectionState = BLEConstants.ConnectionState.CONNECTED,
+            lastDataTimestamp = 1_000L,
+        )
+        model.now = { 1_000L }
 
         model.toggleWheelLock()
         model.updateWheelSecurity(WheelSecurityState(lock = WheelLockState.UNLOCKED))

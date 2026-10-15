@@ -83,6 +83,8 @@ class BleSessionViewModel(application: Application) : AndroidViewModel(applicati
     private val _sessionState = MutableStateFlow(BleSessionState.EMPTY)
     val sessionState: StateFlow<BleSessionState> = _sessionState.asStateFlow()
 
+    internal var now: () -> Long = System::currentTimeMillis
+
 
     internal val rawTraffic = RawTrafficCapture()
     private var rawTrafficAddress = ""
@@ -1187,21 +1189,35 @@ class BleSessionViewModel(application: Application) : AndroidViewModel(applicati
         _eucBleClient.sendCommand(commandType, value)
     }
 
+    /** Locking needs live telemetry showing a stopped wheel; unlocking is always allowed. */
+    fun canLockWheel(state: BleSessionState = _sessionState.value): Boolean {
+        if (!state.isConnected) return false
+        val timestamp = state.lastDataTimestamp ?: return false
+        return now() - timestamp in 0L..LOCK_TELEMETRY_MAX_AGE_MS &&
+            abs(state.currentSpeed) < LOCK_MAX_SPEED_KMH
+    }
+
+    /** Returns false when locking is refused, in which case nothing is sent. */
     @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
-    fun setWheelLocked(locked: Boolean) {
+    fun setWheelLocked(locked: Boolean): Boolean {
+        if (locked && !canLockWheel()) return false
         val command = if (locked) CommandType.LOCK else CommandType.UNLOCK
         sendCommand(command)
         requestWheelLockState()
+        return true
     }
 
+    /** Returns true when a lock or unlock command was sent. */
     @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
-    fun toggleWheelLock() {
+    fun toggleWheelLock(): Boolean =
         when (_sessionState.value.wheelLockState) {
             WheelLockState.LOCKED -> setWheelLocked(false)
             WheelLockState.UNLOCKED -> setWheelLocked(true)
-            WheelLockState.UNKNOWN -> requestWheelLockState()
+            WheelLockState.UNKNOWN -> {
+                requestWheelLockState()
+                false
+            }
         }
-    }
 
     @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
     fun requestWheelLockState() {
@@ -1523,5 +1539,8 @@ class BleSessionViewModel(application: Application) : AndroidViewModel(applicati
 
         // Correction factor for Gotway/Begode MCM boards that over-report speed/distance.
         private const val GOTWAY_MCM_RATIO = 0.875
+
+        private const val LOCK_TELEMETRY_MAX_AGE_MS = 2_000L
+        private const val LOCK_MAX_SPEED_KMH = 1.0
     }
 }

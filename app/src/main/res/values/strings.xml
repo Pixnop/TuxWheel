@@ -559,7 +559,6 @@
     <string name="wheel_lock_status_locked">Locked</string>
     <string name="wheel_lock_status_unlocked">Unlocked</string>
     <string name="wheel_lock_status_unknown">Unknown</string>
-    <string name="lock_wheel">Lock wheel</string>
     <string name="speed_limiter_title">Speed limiter</string>
     <string name="speed_limiter_enabled_title">Speed limiter</string>
     <string name="speed_limiter_enabled_description">Limit the wheel max speed. Your own max speed is restored when turned off</string>
@@ -571,9 +570,8 @@
     <string name="speed_limiter_on">Speed limiter on</string>
     <string name="speed_limiter_off">Speed limiter off</string>
     <string name="speed_limiter_unavailable">Speed limiter unavailable for this wheel</string>
-    <string name="lock_wheel_confirmation">Locking disables the wheel. Only continue while the wheel is stationary.</string>
-    <string name="unlock_wheel">Unlock wheel</string>
-    <string name="unlock_wheel_confirmation">Unlocking reactivates the wheel. Only continue while the wheel is stationary.</string>
+    <string name="speed_limiter_too_fast">Slow down below the limited speed first</string>
+    <string name="wheel_lock_refused">Stop the wheel and wait for live data before locking</string>
     <string name="berm_angle_mode_title">Angle cut-out increase</string>
     <string name="berm_angle_mode_description">Can lead to uncontrollable behavior when fall down, take into account this risk!</string>
     <string name="standby_delay_title">Standby</string>

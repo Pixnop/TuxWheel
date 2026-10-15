@@ -338,13 +338,13 @@ class AppConfig(var context: Context) : KoinComponent {
         set(value) = setValue("wheel_alarm_1_speed", value)
 
     var wheelLocked: Boolean
-        get() = getValue("wheel_locked", false)
-        set(value) = setValue("wheel_locked", value)
+        get() = getPerWheel("wheel_locked", false)
+        set(value) = setPerWheel("wheel_locked", value)
 
     /** Whether the app-side speed limiter currently holds the wheel at [speedLimiterSpeed]. */
     var speedLimiterEnabled: Boolean
-        get() = getValue("speed_limiter_enabled", false)
-        set(value) = setValue("speed_limiter_enabled", value)
+        get() = getPerWheel("speed_limiter_enabled", false)
+        set(value) = setPerWheel("speed_limiter_enabled", value)
 
     /** Speed (km/h) applied to the wheel while the speed limiter is active. */
     var speedLimiterSpeed: Int
@@ -353,8 +353,8 @@ class AppConfig(var context: Context) : KoinComponent {
 
     /** User's own wheel max speed (km/h), restored when the speed limiter is turned off. */
     var speedLimiterSavedMaxSpeed: Int
-        get() = getValue("speed_limiter_saved_max_speed", 25)
-        set(value) = setValue("speed_limiter_saved_max_speed", value)
+        get() = getPerWheel("speed_limiter_saved_max_speed", 25)
+        set(value) = setPerWheel("speed_limiter_saved_max_speed", value)
 
     var connectBeep: Boolean
         get() = getValue("connect_beep", true)
@@ -562,6 +562,20 @@ class AppConfig(var context: Context) : KoinComponent {
 
     private fun <T : Any?> getSpecific(resId: Int, defaultValue: T): T {
         return getValue(specificPrefix + "_" + context.getString(resId), defaultValue)
+    }
+
+    // Keyed by the wheel address; a value saved before this was per wheel moves to the last wheel.
+    private fun <T : Any?> getPerWheel(key: String, defaultValue: T): T {
+        val wheelKey = "${key}_$lastMac"
+        if (lastMac.isNotEmpty() && sharedPreferences.contains(key) && !sharedPreferences.contains(wheelKey)) {
+            setValue(wheelKey, getValue(key, defaultValue))
+            sharedPreferences.edit().remove(key).apply()
+        }
+        return getValue(wheelKey, defaultValue)
+    }
+
+    private fun setPerWheel(key: String, value: Any?) {
+        setValue("${key}_$lastMac", value)
     }
 
     fun <T : Any?> getValue(resId: Int, defaultValue: T): T {

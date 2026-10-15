@@ -23,6 +23,7 @@ import io.github.tuxwheel.ble.BleSessionViewModel
 import io.github.tuxwheel.data.TripDao
 import io.github.tuxwheel.utils.ThemeEnum
 import com.google.common.truth.Truth.assertThat
+import io.github.tritbool.euc.ble.models.WheelLockState
 import io.github.tritbool.euc.ble.protocols.CommandType
 import io.mockk.*
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -36,6 +37,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.Robolectric
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.shadows.ShadowDialog
+import org.robolectric.shadows.ShadowToast
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import java.time.Duration
@@ -280,6 +282,37 @@ class DashboardRendererTest {
         actions.singleTap()
         verify(exactly = 1) { session.sendCommand(any<CommandType>()) }
         assertThat(config.swapSpeedPwm).isFalse()
+    }
+
+    @Test fun `lock button leaves the decision to the session and never offers to lock while moving`() {
+        val config = AppConfig(context)
+        val states = MutableStateFlow(BleSessionState(wheelLockState = WheelLockState.UNLOCKED))
+        val session = mockk<BleSessionViewModel>(relaxed = true)
+        every { session.sessionState } returns states
+        every { session.toggleWheelLock() } returns false
+        val actions = DashboardActions(context, session, config)
+        val state = DashboardUiState.EMPTY.copy(lockSupported = true, speed = 30f)
+
+        actions.toggleLock(state)
+        assertThat(ShadowDialog.getLatestDialog()).isNull()
+        assertThat(ShadowToast.getTextOfLatestToast()).isEqualTo(context.getString(R.string.wheel_lock_refused))
+        assertThat(config.wheelLocked).isFalse()
+
+        states.value = BleSessionState(wheelLockState = WheelLockState.UNKNOWN)
+        config.wheelLocked = true
+        ShadowToast.reset()
+        actions.toggleLock(state.copy(speed = 0f, wheelLocked = true))
+        assertThat(ShadowToast.shownToastCount()).isEqualTo(0)
+        assertThat(config.wheelLocked).isTrue()
+
+        states.value = BleSessionState(wheelLockState = WheelLockState.LOCKED)
+        every { session.toggleWheelLock() } returns true
+        actions.toggleLock(state)
+        assertThat(config.wheelLocked).isFalse()
+        verify(exactly = 3) { session.toggleWheelLock() }
+        verify(exactly = 0) { session.setWheelLocked(any()) }
+        verify(exactly = 0) { session.sendCommand(any<CommandType>()) }
+        actions.dispose()
     }
 
     @Test fun `existing stored false does not affect dashboard mapping or expose a switch`() {

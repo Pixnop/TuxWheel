@@ -1,12 +1,15 @@
 package io.github.tuxwheel.feature.speedlimiter
 
 import android.annotation.SuppressLint
+import androidx.annotation.StringRes
 import io.github.tuxwheel.AppConfig
+import io.github.tuxwheel.R
 import io.github.tuxwheel.ble.BleSessionState
 import io.github.tuxwheel.ble.BleSessionViewModel
 import io.github.tuxwheel.ble.getWheelType
 import io.github.tuxwheel.utils.Constants
 import io.github.tritbool.euc.ble.protocols.CommandType
+import kotlin.math.abs
 
 /**
  * App-side speed limiter built on [CommandType.SET_SPEED_LIMIT].
@@ -34,13 +37,31 @@ object SpeedLimiter {
     fun currentWheelMaxSpeed(state: BleSessionState, config: AppConfig): Int =
         reportedMaxSpeed(state) ?: config.wheelMaxSpeed
 
+    /** Highest limit the limiter may apply, so it never raises the wheel's own max speed. */
+    fun maxLimit(state: BleSessionState, config: AppConfig): Int =
+        (if (config.speedLimiterEnabled) config.speedLimiterSavedMaxSpeed
+        else currentWheelMaxSpeed(state, config)).coerceIn(MIN_SPEED, MAX_SPEED)
+
+    /** Applying a limit below the current speed mid-ride is unsafe; an invalid speed counts as moving. */
+    fun isBelowCurrentSpeed(limit: Int, state: BleSessionState): Boolean =
+        !(abs(state.currentSpeed) <= limit)
+
+    /** Message explaining why [enable], [disable], [toggle] or [setLimit] returned false. */
+    @StringRes
+    fun refusalMessage(session: BleSessionViewModel): Int =
+        if (isAvailable(session)) R.string.speed_limiter_too_fast else R.string.speed_limiter_unavailable
+
     @SuppressLint("MissingPermission")
     fun enable(session: BleSessionViewModel, config: AppConfig): Boolean {
         if (config.speedLimiterEnabled) return true
         if (!isAvailable(session)) return false
-        config.speedLimiterSavedMaxSpeed = currentWheelMaxSpeed(session.sessionState.value, config)
+        val state = session.sessionState.value
+        val max = currentWheelMaxSpeed(state, config)
+        val limit = minOf(config.speedLimiterSpeed, max)
+        if (isBelowCurrentSpeed(limit, state)) return false
+        config.speedLimiterSavedMaxSpeed = max
         config.speedLimiterEnabled = true
-        session.sendCommand(CommandType.SET_SPEED_LIMIT, config.speedLimiterSpeed)
+        session.sendCommand(CommandType.SET_SPEED_LIMIT, limit)
         return true
     }
 
@@ -58,13 +79,23 @@ object SpeedLimiter {
     fun toggle(session: BleSessionViewModel, config: AppConfig): Boolean =
         if (config.speedLimiterEnabled) disable(session, config) else enable(session, config)
 
-    /** Updates the limiter speed and re-applies it to the wheel when the limiter is active. */
+    /**
+     * Updates the limiter speed, capped at [maxLimit], and re-applies it to the wheel when the
+     * limiter is active. Returns false, keeping the previous limit, if it is below the current speed.
+     */
     @SuppressLint("MissingPermission")
-    fun setLimit(session: BleSessionViewModel, config: AppConfig, speed: Int) {
-        config.speedLimiterSpeed = speed.coerceIn(MIN_SPEED, MAX_SPEED)
-        if (config.speedLimiterEnabled && isAvailable(session)) {
-            session.sendCommand(CommandType.SET_SPEED_LIMIT, config.speedLimiterSpeed)
+    fun setLimit(session: BleSessionViewModel, config: AppConfig, speed: Int): Boolean {
+        val state = session.sessionState.value
+        val limit = speed.coerceIn(MIN_SPEED, maxLimit(state, config))
+        if (!config.speedLimiterEnabled || !isAvailable(session, state)) {
+            config.speedLimiterSpeed = limit
+            return true
         }
+        val applied = minOf(limit, config.speedLimiterSavedMaxSpeed)
+        if (isBelowCurrentSpeed(applied, state)) return false
+        config.speedLimiterSpeed = limit
+        session.sendCommand(CommandType.SET_SPEED_LIMIT, applied)
+        return true
     }
 
     private fun reportedMaxSpeed(state: BleSessionState): Int? =
