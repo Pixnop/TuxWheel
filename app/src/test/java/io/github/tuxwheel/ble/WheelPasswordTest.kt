@@ -10,6 +10,8 @@ import io.github.tritbool.euc.ble.models.AuthenticationState
 import io.github.tritbool.euc.ble.models.WheelSecurityEvent
 import io.github.tritbool.euc.ble.models.WheelSecurityState
 import io.github.tritbool.euc.ble.models.WheelLockState
+import io.github.tritbool.euc.ble.models.PasswordOperation
+import io.github.tritbool.euc.ble.models.PasswordOperationStatus
 import io.github.tritbool.euc.ble.protocols.CommandSupport
 import io.github.tritbool.euc.ble.protocols.CommandType
 import io.mockk.every
@@ -115,5 +117,49 @@ class WheelPasswordTest {
         model.updateWheelSecurity(null)
         shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(11))
         assertThat(model.sessionState.value.passwordPromptRequired).isFalse()
+    }
+
+    @Test fun `password management sends requests and waits for wheel confirmation`() {
+        every { client.getCommandSupport(CommandType.SET_PASSWORD) } returns CommandSupport.SUPPORTED
+        every { client.getCommandSupport(CommandType.CHANGE_PASSWORD) } returns CommandSupport.SUPPORTED
+        every { client.getCommandSupport(CommandType.REMOVE_PASSWORD) } returns CommandSupport.SUPPORTED
+        model.updateWheelSecurity(WheelSecurityState())
+
+        assertThat(model.setWheelPassword("0012")).isTrue()
+        assertThat(model.sessionState.value.passwordOperationPending).isTrue()
+        assertThat(model.sessionState.value.passwordOperationStatus).isNull()
+        verify { client.setPassword("0012") }
+        model.handleWheelSecurityEvent(
+            WheelSecurityEvent.PasswordOperationResult(PasswordOperation.SET, PasswordOperationStatus.CONFIRMED)
+        )
+        assertThat(model.sessionState.value.passwordOperationPending).isFalse()
+        assertThat(model.sessionState.value.passwordOperationStatus).isEqualTo(PasswordOperationStatus.CONFIRMED)
+
+        model.clearWheelPasswordOperationResult()
+        assertThat(model.changeWheelPassword("0012", "0034")).isTrue()
+        verify { client.changePassword("0012", "0034") }
+        model.handleWheelSecurityEvent(
+            WheelSecurityEvent.PasswordOperationResult(
+                PasswordOperation.CHANGE,
+                PasswordOperationStatus.TIMEOUT_UNCONFIRMED,
+            )
+        )
+        assertThat(model.sessionState.value.passwordOperationStatus)
+            .isEqualTo(PasswordOperationStatus.TIMEOUT_UNCONFIRMED)
+
+        model.clearWheelPasswordOperationResult()
+        assertThat(model.removeWheelPassword("0034")).isTrue()
+        verify { client.removePassword("0034") }
+    }
+
+    @Test fun `password management rejects invalid credentials and overlapping requests`() {
+        every { client.getCommandSupport(CommandType.SET_PASSWORD) } returns CommandSupport.SUPPORTED
+        model.updateWheelSecurity(WheelSecurityState())
+
+        assertThat(model.setWheelPassword("１２３４")).isFalse()
+        assertThat(model.sessionState.value.passwordOperationPending).isFalse()
+        assertThat(model.setWheelPassword("0012")).isTrue()
+        assertThat(model.setWheelPassword("0034")).isFalse()
+        verify(exactly = 1) { client.setPassword(any()) }
     }
 }

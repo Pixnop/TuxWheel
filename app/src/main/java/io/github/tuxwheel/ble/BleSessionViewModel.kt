@@ -32,6 +32,8 @@ import io.github.tritbool.euc.ble.models.AuthenticationState
 import io.github.tritbool.euc.ble.models.WheelSecurityEvent
 import io.github.tritbool.euc.ble.models.WheelSecurityState
 import io.github.tritbool.euc.ble.models.WheelLockState
+import io.github.tritbool.euc.ble.models.PasswordOperation
+import io.github.tritbool.euc.ble.models.PasswordOperationStatus
 import io.github.tritbool.euc.ble.protocols.CommandSupport
 import io.github.tritbool.euc.ble.protocols.CommandType
 import io.github.tritbool.euc.ble.protocols.EUCProtocol
@@ -241,6 +243,19 @@ class BleSessionViewModel(application: Application) : AndroidViewModel(applicati
                 )
             }
         }
+        if (event is WheelSecurityEvent.PasswordOperationResult) {
+            _sessionState.update {
+                if (it.passwordOperationPending && it.passwordOperation == event.operation) {
+                    it.copy(
+                        passwordOperationPending = false,
+                        passwordOperationStatus = event.status,
+                        passwordOperationError = false,
+                    )
+                } else {
+                    it
+                }
+            }
+        }
         if (event is WheelSecurityEvent.AuthenticationStatus &&
             event.state == AuthenticationState.REQUIRED && passwordResponseJob != null
         ) {
@@ -252,7 +267,16 @@ class BleSessionViewModel(application: Application) : AndroidViewModel(applicati
         passwordPromptOffered = false
         passwordResponseJob?.cancel()
         passwordResponseJob = null
-        _sessionState.update { it.copy(passwordPromptRequired = false, passwordPromptError = false) }
+        _sessionState.update {
+            it.copy(
+                passwordPromptRequired = false,
+                passwordPromptError = false,
+                passwordOperation = null,
+                passwordOperationPending = false,
+                passwordOperationStatus = null,
+                passwordOperationError = false,
+            )
+        }
     }
 
     private fun retryPasswordPrompt() {
@@ -273,6 +297,69 @@ class BleSessionViewModel(application: Application) : AndroidViewModel(applicati
             retryPasswordPrompt()
         }
         _eucBleClient.authenticate(password)
+    }
+
+    @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
+    fun setWheelPassword(newPassword: String): Boolean =
+        submitWheelPasswordOperation(PasswordOperation.SET, CommandType.SET_PASSWORD, newPassword) {
+            _eucBleClient.setPassword(newPassword)
+        }
+
+    @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
+    fun changeWheelPassword(oldPassword: String, newPassword: String): Boolean =
+        submitWheelPasswordOperation(PasswordOperation.CHANGE, CommandType.CHANGE_PASSWORD, oldPassword, newPassword) {
+            _eucBleClient.changePassword(oldPassword, newPassword)
+        }
+
+    @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
+    fun removeWheelPassword(currentPassword: String): Boolean =
+        submitWheelPasswordOperation(PasswordOperation.REMOVE, CommandType.REMOVE_PASSWORD, currentPassword) {
+            _eucBleClient.removePassword(currentPassword)
+        }
+
+    private fun submitWheelPasswordOperation(
+        operation: PasswordOperation,
+        command: CommandType,
+        currentPassword: String,
+        newPassword: String = "",
+        submit: () -> Unit,
+    ): Boolean {
+        fun valid(password: String) = password.length == 4 && password.all { it in '0'..'9' }
+        if (!valid(currentPassword) || (operation == PasswordOperation.CHANGE && !valid(newPassword)) ||
+            !isCommandSupported(command) ||
+            _sessionState.value.passwordOperationPending
+        ) return false
+
+        _sessionState.update {
+            it.copy(
+                passwordOperation = operation,
+                passwordOperationPending = true,
+                passwordOperationStatus = null,
+                passwordOperationError = false,
+            )
+        }
+        return try {
+            submit()
+            true
+        } catch (_: Exception) {
+            _sessionState.update {
+                it.copy(
+                    passwordOperationPending = false,
+                    passwordOperationError = true,
+                )
+            }
+            false
+        }
+    }
+
+    fun clearWheelPasswordOperationResult() {
+        _sessionState.update {
+            if (it.passwordOperationPending) it else it.copy(
+                passwordOperation = null,
+                passwordOperationStatus = null,
+                passwordOperationError = false,
+            )
+        }
     }
 
     // Grace period given to the library to auto-detect the wheel protocol after the

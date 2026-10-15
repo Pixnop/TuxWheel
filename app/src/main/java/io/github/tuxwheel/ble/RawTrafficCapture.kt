@@ -48,10 +48,11 @@ internal class RawTrafficCapture {
         if (!enabled) {
             discardPending()
         } else if (active && address.isNotBlank()) {
-            // Authentication frames contain a plaintext PIN; never queue them for diagnostics.
+            // KingSong authentication and password-management frames contain plaintext credentials.
             if (event.direction == TrafficDirection.TX && event.bytes.size >= 20 &&
                 event.bytes[0] == 0xAA.toByte() && event.bytes[1] == 0x55.toByte() &&
-                event.bytes[16] == 0x44.toByte()
+                (event.bytes[16] == 0x41.toByte() || event.bytes[16] == 0x42.toByte() ||
+                    event.bytes[16] == 0x44.toByte())
             ) return
             pending.trySend(RawTrafficRecord(address, event))
         }
