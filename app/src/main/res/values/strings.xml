@@ -472,6 +472,8 @@
     <string name="wheel_password_current">Current password</string>
     <string name="wheel_password_current_remove">Password to remove</string>
     <string name="wheel_password_new">New password</string>
+    <string name="wheel_password_confirm">Confirm new password</string>
+    <string name="wheel_password_mismatch">Passwords do not match.</string>
     <string name="wheel_password_value">Four-digit password</string>
     <string name="wheel_password_submit">Send</string>
     <string name="wheel_password_waiting">Waiting for wheel confirmation…</string>
