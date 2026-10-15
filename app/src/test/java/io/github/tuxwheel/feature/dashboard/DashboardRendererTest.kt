@@ -14,6 +14,7 @@ import androidx.lifecycle.LifecycleRegistry
 import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.preference.PreferenceManager
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.test.core.app.ApplicationProvider
 import io.github.tuxwheel.*
@@ -73,7 +74,7 @@ class DashboardRendererTest {
         startKoin { modules(module {
             single { config }; single { session }; single { mockk<TripDao>(relaxed = true) }
         }) }
-        val recycler = RecyclerView(context)
+        val recycler = RecyclerView(context).apply { layoutManager = LinearLayoutManager(context) }
         val adapter = MainPageAdapter(mutableListOf(R.layout.main_view_main), activity)
         try {
             val holder = adapter.createViewHolder(recycler, R.layout.main_view_main)
@@ -307,6 +308,8 @@ class DashboardRendererTest {
         val session = session()
         val actions = DashboardActions(context, session, config)
         mockkObject(io.github.tuxwheel.utils.SomeUtil)
+        // playBeep() is @JvmStatic, mockkObject alone does not intercept it.
+        mockkStatic(io.github.tuxwheel.utils.SomeUtil::class)
         try {
             every { io.github.tuxwheel.utils.SomeUtil.playBeep() } just Runs
             actions.singleTap()
@@ -322,6 +325,7 @@ class DashboardRendererTest {
             verify(exactly = 0) { session.sendCommand(any<CommandType>()) }
         } finally {
             actions.dispose()
+            unmockkStatic(io.github.tuxwheel.utils.SomeUtil::class)
             unmockkObject(io.github.tuxwheel.utils.SomeUtil)
         }
     }

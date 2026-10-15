@@ -10,10 +10,12 @@ import io.github.tuxwheel.R
 import io.github.tuxwheel.ble.BleSessionState
 import io.github.tuxwheel.ble.BleSessionViewModel
 import com.google.common.truth.Truth.assertThat
+import io.github.tritbool.euc.ble.EucBleClient
 import io.github.tritbool.euc.ble.core.BLEConstants
 import io.github.tritbool.euc.ble.models.EUCData
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
@@ -40,6 +42,7 @@ class DashboardSessionResetTest {
     private lateinit var states: MutableStateFlow<BleSessionState>
     private lateinit var data: EUCData
     private lateinit var collecting: Job
+    private val bleClient = mockk<EucBleClient>(relaxed = true)
     private fun idle() = shadowOf(Looper.getMainLooper()).idle()
     private fun counter(name: String, value: Any) {
         session.javaClass.getDeclaredField(name).apply { isAccessible = true }.set(session, value)
@@ -54,6 +57,9 @@ class DashboardSessionResetTest {
         ).map { context.getString(it) }.toTypedArray()
         startKoin { modules(module { single { config } }) }
         session = BleSessionViewModel(context)
+        // The dashboard queries lock/limiter support, so a connected session needs a client.
+        session.javaClass.getDeclaredField("_eucBleClient\$delegate").apply { isAccessible = true }
+            .set(session, lazyOf(bleClient))
         data = mockk(relaxed = true) {
             // A stopped wheel avoids unrelated riding-clock updates during reset assertions.
             every { speed } returns 0.0
@@ -118,9 +124,7 @@ class DashboardSessionResetTest {
         assertThat(states.value.sessionRidingTimeSec).isEqualTo(1800L)
         assertThat(states.value.sessionRideTime).isEqualTo(3600L)
         assertThat(session.batteryLowestLevel).isEqualTo(70)
-        val client = session.javaClass.getDeclaredField("_eucBleClient\$delegate").apply { isAccessible = true }
-            .get(session) as Lazy<*>
-        assertThat(client.isInitialized()).isFalse()
+        verify(exactly = 0) { bleClient.sendCommand(any(), any()) }
     }
 
     private fun assertMaxReset() {

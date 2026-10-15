@@ -38,7 +38,7 @@ class EventsLoggingTree(context: Context, private val state: EventsState = event
         }
     }
 
-    override fun isLoggable(tag: String?, priority: Int): Boolean {
+    public override fun isLoggable(tag: String?, priority: Int): Boolean {
         return priority >= Log.INFO
     }
 

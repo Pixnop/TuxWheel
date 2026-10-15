@@ -4,6 +4,7 @@ import android.app.Activity
 import android.app.Application
 import android.content.Intent
 import android.net.Uri
+import android.os.Looper
 import androidx.appcompat.app.AlertDialog
 import io.github.tuxwheel.R
 import io.github.tuxwheel.data.TripItemState
@@ -47,10 +48,13 @@ class TripActionsTest {
             val cancel = TripActions.confirmDelete(activity, item, deleted::add)
             assertThat(cancel.findViewById<android.widget.TextView>(android.R.id.message)!!.text.toString())
                 .isEqualTo(activity.getString(R.string.trip_menu_delete_file_confirmation) + " ride.csv")
+            // Dialog button clicks are posted to the main looper.
             cancel.getButton(AlertDialog.BUTTON_NEGATIVE).performClick()
+            shadowOf(Looper.getMainLooper()).idle()
             assertThat(deleted).isEmpty()
             val confirm = TripActions.confirmDelete(activity, item, deleted::add)
             confirm.getButton(AlertDialog.BUTTON_POSITIVE).performClick()
+            shadowOf(Looper.getMainLooper()).idle()
             assertThat(deleted).containsExactly(item)
         } finally { controller.pause().stop().destroy() }
     }

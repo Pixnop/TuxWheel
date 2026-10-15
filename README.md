@@ -4,7 +4,7 @@
 </p>
 
 
-[![Build](https://github.com/Tritbool/TuxWheel/actions/workflows/gradle.yml/badge.svg)](https://github.com/Tritbool/TuxWheel/actions)
+[![Build](https://github.com/Tritbool/TuxWheel/actions/workflows/app-checks.yml/badge.svg)](https://github.com/Tritbool/TuxWheel/actions/workflows/app-checks.yml)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](LICENSE)
 
 TuxWheel is an Android companion for electric unicycles (EUCs). It connects

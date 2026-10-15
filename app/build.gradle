@@ -67,6 +67,10 @@ android {
         }
         unitTests.all {
             jvmArgs '-Xmx2g'
+            testLogging {
+                events 'failed'
+                exceptionFormat 'full'
+            }
         }
     }
     packagingOptions {

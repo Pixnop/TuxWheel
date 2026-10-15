@@ -10,6 +10,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
 import androidx.preference.PreferenceManager
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.test.core.app.ApplicationProvider
 import io.github.tuxwheel.*
@@ -63,7 +64,7 @@ class BmsRendererTest {
         startKoin { modules(module {
             single { config }; single { model }; single { mockk<TripDao>(relaxed = true) }
         }) }
-        val recycler = RecyclerView(context)
+        val recycler = RecyclerView(context).apply { layoutManager = LinearLayoutManager(context) }
         val adapter = MainPageAdapter(mutableListOf(R.layout.main_view_main, R.layout.main_view_params_list), activity)
         try {
             adapter.configureSmartBmsDisplay()

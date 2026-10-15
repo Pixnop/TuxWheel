@@ -6,6 +6,7 @@ import android.view.View
 import androidx.compose.ui.platform.ComposeView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleRegistry
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.test.core.app.ApplicationProvider
 import androidx.preference.PreferenceManager
@@ -44,7 +45,7 @@ class TelemetryRendererSwitchTest {
             single { config }
             single { model }
         }) }
-        val recycler = RecyclerView(context)
+        val recycler = RecyclerView(context).apply { layoutManager = LinearLayoutManager(context) }
         val adapter = MainPageAdapter(mutableListOf(R.layout.main_view_params_list), activity)
         try {
             lifecycle.currentState = Lifecycle.State.CREATED

@@ -11,6 +11,7 @@ import androidx.preference.PreferenceManager
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.test.core.app.ApplicationProvider
 import io.github.tuxwheel.AppConfig
@@ -22,6 +23,7 @@ import io.github.tuxwheel.MainPageAdapter
 import io.github.tuxwheel.R
 import io.github.tuxwheel.ble.BleSessionViewModel
 import com.google.common.truth.Truth.assertThat
+import io.mockk.Called
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -121,11 +123,13 @@ class EventsRendererTest {
         val activity = mockk<MainActivity>(relaxed = true)
         val lifecycle = LifecycleRegistry(activity)
         every { activity.lifecycle } returns lifecycle
+        // MainPageAdapter reads page toggles from the application's preferences.
+        every { activity.application } returns context
         startKoin { modules(module {
             single { config }
             single { model }
         }) }
-        val recycler = RecyclerView(context)
+        val recycler = RecyclerView(context).apply { layoutManager = LinearLayoutManager(context) }
         val adapter = MainPageAdapter(mutableListOf(R.layout.main_view_events), activity)
         EventsLoggingTree.events.replace("history\n------------\n")
         try {

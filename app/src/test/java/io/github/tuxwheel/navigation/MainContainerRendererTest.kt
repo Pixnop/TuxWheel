@@ -49,6 +49,10 @@ class MainContainerRendererTest {
         every { adapter.itemCount } answers { ids.size }
         every { adapter.registerAdapterDataObserver(any()) } answers { observers.add(firstArg()); Unit }
         every { adapter.unregisterAdapterDataObserver(any()) } answers { observers.remove(firstArg()); Unit }
+        // Relaxed mocks don't keep property values.
+        var position = -1
+        every { adapter.position } answers { position }
+        every { adapter.position = any() } answers { position = firstArg(); Unit }
         val renderer = MainContainerRenderer(binding, adapter, R.layout.main_view_events)
         try {
             renderer.render()
