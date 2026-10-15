@@ -552,7 +552,7 @@ class MainActivity : AppCompatActivity() {
             this,
             mNotificationButtonReceiver,
             makeNotificationIntentFilter(),
-            ContextCompat.RECEIVER_EXPORTED
+            ContextCompat.RECEIVER_NOT_EXPORTED
         )
         ContextCompat.registerReceiver(
             this,

@@ -258,6 +258,7 @@ object Alarms: KoinComponent {
 
     private fun raiseAlarm(alarmType: ALARM_TYPE, value: Double, mContext: Context) {
         val intent = Intent(Constants.ACTION_ALARM_TRIGGERED)
+        intent.setPackage(mContext.packageName)
         intent.putExtra(Constants.INTENT_EXTRA_ALARM_TYPE, alarmType)
         intent.putExtra(Constants.INTENT_EXTRA_ALARM_VALUE, value)
         val pattern: LongArray = when (alarmType) {

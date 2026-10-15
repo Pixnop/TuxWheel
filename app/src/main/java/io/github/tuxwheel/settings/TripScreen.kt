@@ -32,7 +32,9 @@ fun tripScreen(viewModel: BleSessionViewModel = koinInject()) {
             showArrowIcon = false,
         ) {
             viewModel.resetVoltageSag()
-            context.sendBroadcast(Intent(Constants.ACTION_PREFERENCE_RESET))
+            context.sendBroadcast(
+                Intent(Constants.ACTION_PREFERENCE_RESET).setPackage(context.packageName)
+            )
         }
         clickablePref(
             name = stringResource(R.string.reset_user_distance_title),

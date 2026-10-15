@@ -93,7 +93,9 @@ class NotificationUtil(private val context: Context) : KoinComponent {
             )
             notificationView.setOnClickPendingIntent(
                 it.first,
-                PendingIntent.getBroadcast(context, 0, Intent(it.third), intentFlag)
+                PendingIntent.getBroadcast(
+                    context, 0, Intent(it.third).setPackage(context.packageName), intentFlag
+                )
             )
         }
 
