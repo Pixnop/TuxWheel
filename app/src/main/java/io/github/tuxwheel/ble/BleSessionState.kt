@@ -5,6 +5,8 @@ import io.github.tritbool.euc.ble.core.BLEConstants
 import io.github.tritbool.euc.ble.models.EUCData
 import io.github.tritbool.euc.ble.models.EUCDevice
 import io.github.tritbool.euc.ble.models.WheelLockState
+import io.github.tritbool.euc.ble.models.PasswordOperation
+import io.github.tritbool.euc.ble.models.PasswordOperationStatus
 import io.github.tritbool.euc.ble.protocols.EUCProtocol
 
 /**
@@ -53,6 +55,10 @@ data class BleSessionState(
     val protocolCandidates: List<EUCProtocol> = emptyList(),
     val passwordPromptRequired: Boolean = false,
     val passwordPromptError: Boolean = false,
+    val passwordOperation: PasswordOperation? = null,
+    val passwordOperationPending: Boolean = false,
+    val passwordOperationStatus: PasswordOperationStatus? = null,
+    val passwordOperationError: Boolean = false,
     val wheelLockState: WheelLockState = WheelLockState.UNKNOWN,
     /** Includes repeated reports so a rejected command can correct an optimistic toggle. */
     val wheelLockStateRevision: Long = 0,

@@ -38,15 +38,17 @@ class RawTrafficCaptureTest {
         }
     }
 
-    @Test fun `plaintext KingSong password frames never enter the diagnostic queue`() = runTest {
+    @Test fun `plaintext KingSong credential frames never enter the diagnostic queue`() = runTest {
         val capture = RawTrafficCapture()
-        val bytes = ByteArray(20).apply {
-            this[0] = 0xAA.toByte()
-            this[1] = 0x55
-            "0012".toByteArray().copyInto(this, 2)
-            this[16] = 0x44
+        for (opcode in listOf(0x41, 0x42, 0x44)) {
+            val bytes = ByteArray(20).apply {
+                this[0] = 0xAA.toByte()
+                this[1] = 0x55
+                "0012".toByteArray().copyInto(this, 2)
+                this[16] = opcode.toByte()
+            }
+            capture.record(address, TrafficEvent(opcode.toLong(), 123L, TrafficDirection.TX, uuid, bytes), true)
         }
-        capture.record(address, TrafficEvent(1, 123L, TrafficDirection.TX, uuid, bytes), true)
         val next = async(start = CoroutineStart.UNDISPATCHED) { capture.records.first() }
         assertThat(next.isCompleted).isFalse()
         capture.record(address, event(2), true)

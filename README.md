@@ -154,10 +154,17 @@ its version is pinned in `gradle/libs.versions.toml`.
 
 Version 0.1.2 is not yet on Maven Central. Until published, build and publish
 `euc-ble-core` to Maven Local from revision
-`fa3fe6715a908ea7e8fd3f4365a0be2b854685d2` using
+`62524e5e1af92da5f53ccea6543b281649e5be73` using
 `./gradlew :euc-ble-core:publishToMavenLocal`. App checks pin that revision,
-which includes raw traffic and the KingSong authentication/speed-limit APIs from
-[PR #74](https://github.com/Tritbool/euc_ble_library/pull/74).
+which includes raw traffic and the KingSong authentication, speed-limit, and
+password-management APIs from
+[PR #76](https://github.com/Tritbool/euc_ble_library/pull/76).
+
+KingSong password set, change, and removal controls appear in Wheel Settings
+when the active protocol supports them. A missing wheel confirmation is reported
+as unconfirmed; it does not prove the password was wrong or unchanged. Raw BLE
+diagnostics omit outgoing KingSong authentication and password-management frames
+because they contain plaintext credentials.
 
 The library owns discovery/scanning, connections, protocol detection/decoding,
 and BLE transport. The app's `BleSessionViewModel` wraps library callbacks
