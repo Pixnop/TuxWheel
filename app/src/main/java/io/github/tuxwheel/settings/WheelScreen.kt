@@ -138,6 +138,8 @@ private fun WheelPasswordDialog(
     }
 
     fun dismiss() {
+        currentPassword = ""
+        newPassword = ""
         viewModel.clearWheelPasswordOperationResult()
         onDismiss()
     }
