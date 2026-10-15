@@ -47,6 +47,12 @@ fun startScreen(
         val context: Context = LocalContext.current
 
         clickablePref(
+            name = stringResource(R.string.speed_limiter_title),
+            themeIcon = ThemeIconEnum.SettingsSpeedLimiter,
+        ) {
+            onSelect(SettingsScreenEnum.SpeedLimiter.name)
+        }
+        clickablePref(
             name = stringResource(R.string.speed_settings_title),
             themeIcon = ThemeIconEnum.SettingsSpeedometer,
         ) {

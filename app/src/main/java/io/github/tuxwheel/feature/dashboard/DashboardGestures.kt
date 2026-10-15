@@ -1,13 +1,16 @@
 package io.github.tuxwheel.feature.dashboard
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.view.GestureDetector
 import android.view.MotionEvent
+import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import io.github.tuxwheel.AppConfig
 import io.github.tuxwheel.DialogHelper.setBlackIcon
 import io.github.tuxwheel.R
 import io.github.tuxwheel.ble.BleSessionViewModel
+import io.github.tuxwheel.feature.speedlimiter.SpeedLimiter
 import io.github.tuxwheel.utils.Alarms
 import io.github.tuxwheel.utils.SomeUtil
 import io.github.tritbool.euc.ble.protocols.CommandType
@@ -31,6 +34,26 @@ class DashboardActions(
     fun doubleTap() {
         if (!active) return
         toggleLight(session, config)
+    }
+
+    @SuppressLint("MissingPermission")
+    fun toggleLock(state: DashboardUiState) {
+        if (!active || !state.lockSupported) return
+        val lock = !state.wheelLocked
+        config.wheelLocked = lock
+        session.setWheelLocked(lock)
+    }
+
+    @SuppressLint("MissingPermission")
+    fun refreshLockState() {
+        if (active) session.requestWheelLockState()
+    }
+
+    fun toggleSpeedLimiter() {
+        if (!active) return
+        if (!SpeedLimiter.toggle(session, config)) {
+            Toast.makeText(context, R.string.speed_limiter_unavailable, Toast.LENGTH_SHORT).show()
+        }
     }
 
     fun replaceBlock(block: DashboardBlock, state: DashboardUiState) {

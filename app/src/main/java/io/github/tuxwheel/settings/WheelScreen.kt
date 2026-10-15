@@ -331,6 +331,21 @@ private fun speedLimitSetting(appConfig: AppConfig, viewModel: BleSessionViewMod
     if (kingsong && (reportedLimit == null || state.alarm1Speed == null ||
         state.alarm2Speed == null || state.alarm3Speed == null)) return
 
+    if (appConfig.speedLimiterEnabled) {
+        // The wheel currently holds the limiter speed; edit the max speed restored on deactivation.
+        sliderPref(
+            name = stringResource(R.string.max_speed_title),
+            desc = stringResource(R.string.speed_limiter_saved_description),
+            position = appConfig.speedLimiterSavedMaxSpeed.toFloat(),
+            min = 0f,
+            max = 100f,
+            unit = R.string.kmh,
+        ) {
+            appConfig.speedLimiterSavedMaxSpeed = it.toInt()
+        }
+        return
+    }
+
     sliderPref(
         name = stringResource(R.string.max_speed_title),
         desc = stringResource(R.string.tilt_back_description),

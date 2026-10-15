@@ -19,6 +19,7 @@ enum class ThemeIconEnum {
     MenuAlarm,
     SettingsWheel,
     SettingsSpeedometer,
+    SettingsSpeedLimiter,
     SettingsLog,
     SettingsBug,
     SettingsAbout,

@@ -87,6 +87,16 @@ data class DashboardUiState(
     /** Configured max speed (km/h) used to normalise the dial arc. */
     val maxSpeed: Int = 50,
 
+    // ── Quick controls ──────────────────────────────────────────────────────
+    /** The connected wheel supports lock, unlock and lock-state requests. */
+    val lockSupported: Boolean = false,
+    val wheelLocked: Boolean = false,
+    /** The connected wheel can currently receive speed limiter commands. */
+    val speedLimiterAvailable: Boolean = false,
+    val speedLimiterEnabled: Boolean = false,
+    /** Speed limiter value in km/h. */
+    val speedLimiterSpeed: Int = 0,
+
     // ── Info blocks ─────────────────────────────────────────────────────────
     /** Pre-formatted label/value pairs rendered around the gauge. */
     val infoBlocks: List<DashboardBlock> = emptyList()

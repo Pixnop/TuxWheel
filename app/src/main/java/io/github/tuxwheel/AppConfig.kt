@@ -341,6 +341,21 @@ class AppConfig(var context: Context) : KoinComponent {
         get() = getValue("wheel_locked", false)
         set(value) = setValue("wheel_locked", value)
 
+    /** Whether the app-side speed limiter currently holds the wheel at [speedLimiterSpeed]. */
+    var speedLimiterEnabled: Boolean
+        get() = getValue("speed_limiter_enabled", false)
+        set(value) = setValue("speed_limiter_enabled", value)
+
+    /** Speed (km/h) applied to the wheel while the speed limiter is active. */
+    var speedLimiterSpeed: Int
+        get() = getValue("speed_limiter_speed", 20)
+        set(value) = setValue("speed_limiter_speed", value)
+
+    /** User's own wheel max speed (km/h), restored when the speed limiter is turned off. */
+    var speedLimiterSavedMaxSpeed: Int
+        get() = getValue("speed_limiter_saved_max_speed", wheelMaxSpeed)
+        set(value) = setValue("speed_limiter_saved_max_speed", value)
+
     var connectBeep: Boolean
         get() = getValue("connect_beep", true)
         set(value) = setValue("connect_beep", value)
